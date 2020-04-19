@@ -1,0 +1,11 @@
+@import "./variables.css";
+
+.WaitingRoom {
+  background-color: white;
+  display: inline-block;
+  padding: var(--box-padding);
+  border-radius: var(--box-radius);
+  position: relative;
+  top: 40%;
+  user-select: text;
+}
