@@ -4,23 +4,22 @@ export enum Color {
   Spades = "spades",
   Hearts = "hearts",
   Clubs = "clubs",
-  Diamonds = "diamons",
+  Diamonds = "diamonds"
 }
 
 export type Value = number;
 
 export const values: Value[] = Array.from(Array(14).keys()).slice(1);
 
-export type Card = { color: Color, value: number }
+export type Card = { color: Color; value: number };
 
-export const card = (color: Color, value: Value): Card => (
-  { color, value }
-)
+export const card = (color: Color, value: Value): Card => ({ color, value });
 
-export type Deck = Card[]
+export type Deck = Card[];
 
 export const full: Deck = values.reduce(
-  (deck: Deck, value: Value) => deck.concat(Object.values(Color).map(color => card(color, value))),
+  (deck: Deck, value: Value) =>
+    deck.concat(Object.values(Color).map(color => card(color, value))),
   []
 );
 
@@ -44,12 +43,36 @@ export const fullFor = (players: number): Deck => {
 
 export const shuffle: (deck: Deck) => Deck = _shuffle;
 
-export type Hand = Card[]
+export type Hand = Card[];
 
 export const deal = (deck: Deck, players: number): Hand[] => {
-  const emptyHands = Array(players).fill([])
-  return deck.reduce(([firstHand, ...otherHands], card) => (
-    [...otherHands, [...firstHand, card]]
-  ), emptyHands)
-}
+  const emptyHands = Array(players).fill([]);
+  return deck.reduce(
+    ([firstHand, ...otherHands], card) => [...otherHands, [...firstHand, card]],
+    emptyHands
+  );
+};
 
+export const dealFor = (players: number): Hand[] =>
+  deal(fullFor(players), players);
+
+export const shuffleAndDealFor = (players: number): Hand[] =>
+  deal(_shuffle(fullFor(players)), players);
+
+export const sortHand = (cards: Hand): Hand =>
+  cards.sort((card1, card2) => {
+    if (card1.color < card2.color) {
+      return -1;
+    } else if (card1.color > card2.color) {
+      return 1;
+    } else if (card1.value < card2.value) {
+      return -1;
+    } else if (card1.value > card2.value) {
+      return 1;
+    } else {
+      return 0;
+    }
+  });
+
+export const shuffleAndDealSortedHands = (players: number): Hand[] =>
+  shuffleAndDealFor(players).map(sortHand);

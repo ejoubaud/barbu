@@ -1,19 +1,22 @@
 import create from "zustand";
 
-import { shuffle, fullFor } from "./deck";
+import { shuffleAndDealSortedHands, Hand, Card } from "./deck";
 
-const startGame = (players: number): void => {
-  const deck = shuffle(fullFor(players));
-};
+const players = 4;
+
+export type Player = number;
+export type Table = Card[];
 
 type StoreState = {
-  count: number,
-  increase: () => void,
-  reset: () => void,
-}
+  hands: Hand[];
+  myPlayer: Player;
+  table: Table;
+};
 
-const [useStore] = create<StoreState>(set => ({
-  count: 0,
-  increase: () => set(state => ({ count: state.count + 1 })),
-  reset: () => set({ count: 0 })
+export const [useStore] = create<StoreState>(set => ({
+  hands: shuffleAndDealSortedHands(players),
+  myPlayer: 0,
+  table: []
 }));
+
+export const getMyHand = (state: StoreState) => state.hands[state.myPlayer];
