@@ -7,5 +7,15 @@
   border-radius: var(--box-radius);
   position: relative;
   top: 40%;
+  transform: translateY(-40%);
   user-select: text;
+}
+
+button.WaitingRoom__CopyUrlBtn {
+  margin-left: .7rem;
+  padding: 0 .7rem;
+  user-select: none;
+}
+button.WaitingRoom__CopyUrlBtn i {
+  margin-right: .4rem;
 }

@@ -1,5 +1,12 @@
 :root {
-  --font-family: "Verdana, Arial";
-  --box-padding: 30px;
+  --rhythm: 0.7rem;
+  --box-padding: 50px;
   --box-radius: 8px;
+  --input-radius: 12px;
+  --input-height: 2.5rem;
+  --color-text-dark: #333;
+  --color-text-light: white;
+
+  --color-mat: #45a173;
+  --color-bg-light: white;
 }

@@ -1,8 +1,8 @@
+@import "./variables.css";
+
 body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
+  font-family: Tahoma, Geneva, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -10,4 +10,45 @@ body {
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
+}
+
+h1, h2, h3, h4, h5, h6, p, label, pre {
+  margin-bottom: var(--rhythm);
+  color: var(--color-text-dark);
+}
+
+label {
+  display: block;
+}
+input, button {
+  font-size: 1rem;
+  display: block;
+  height: var(--input-height);
+  padding: 0 0.5rem;
+  outline: 0;
+}
+button,
+input[type=button],
+input[type=submit] {
+  display:inline-block;
+  padding: 0 1.5rem;
+  height: var(--input-height);
+  background-color: var(--color-mat);
+  border-radius: var(--input-radius);
+  color: var(--color-text-light);
+  cursor: pointer;
+  margin-top: 0.7rem;
+}
+button:hover,
+input[type=button]:hover,
+input[type=submit]:hover {
+  filter: brightness(103%);
+}
+.btn-ghost {
+  background-color: var(--color-bg-light);
+  border: 2px var(--color-text-dark) solid;
+  color: var(--color-text-dark);
+}
+.btn-ghost:hover {
+  filter: brightness(98%);
 }
