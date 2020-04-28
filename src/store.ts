@@ -1,82 +1,45 @@
-import create from "zustand";
-import produce from "immer";
+// the local store for a given player/client
+import createStore from "zustand";
 
-import { shuffleAndDealSortedHands, Hand, Card } from "./deck";
+import { Hand as ImportedHand } from "./deck";
+import { PlayerId as ImportedPlayerId, RoomId, GameStarter } from "./common";
+import { Client, nullClient } from "./client";
 
-export type Hands = Map<PlayerId, Hand>
-export type RoomId = string;
-export type RoomIdSetter = (roomId: RoomId) => void;
-export type PlayerId = string;
-export type PlayerIdSetter = (playerName: PlayerId) => void;
-export type PlayerSetter = (player: Player) => void;
-export type Player = { name: PlayerId };
-export type Players = Map<PlayerId, Player>;
-export type Table = Card[];
+type Err = string;
+export type PlayerId = ImportedPlayerId;
+export type Hand = ImportedHand;
 
-type StoreState = {
-  hands: Hands;
-  table: Table;
-
-  isHost: boolean;
-  makeHost: () => void;
-
+type PlayerStoreState = {
+  client: Client;
+  startGame: GameStarter | null;
   roomId: RoomId;
-  setRoomId: RoomIdSetter;
-
-  myPlayer: PlayerId;
-  setMyPlayer: PlayerIdSetter;
-  players: Players;
-  playersOrder: PlayerId[];
-  addPlayer: PlayerSetter;
-  removePlayer: PlayerIdSetter;
+  players: PlayerId[];
+  myName: PlayerId;
+  nameError: Err;
 };
 
-export const [useStore] = create<StoreState>(set => ({
-  hands: new Map(),
-  table: [],
-
-  isHost: false,
-  makeHost: () => set({ isHost: true }),
-
+export const [useStore, store] = createStore<PlayerStoreState>(set => ({
+  client: nullClient,
+  startGame: null,
   roomId: "",
-  setRoomId: roomId => set({ roomId }),
-
-  myPlayer: "",
-  setMyPlayer: name => set({ myPlayer: name }),
-  players: new Map(),
-  playersOrder: [],
-  addPlayer: player =>
-    set(
-      produce(({ players, playersOrder }) => {
-        players.set(player.name, player);
-        playersOrder.push(player);
-      })
-    ),
-  removePlayer: playerName =>
-    set(
-      produce(({ players, playersOrder }) => {
-        players.delete(playerName);
-        playersOrder.splice(playersOrder.indexOf(playerName), 1);
-      })
-    )
+  players: [],
+  myName: "",
+  nameError: "",
 }));
 
-export const getMyHand = ({ hands, myPlayer, players }: StoreState): Hand =>
-  // TODO cache this in the future
-  shuffleAndDealSortedHands(players.size).reduce((hands, hand, idx) => (
-    hands.set(Array.from(players.keys())[idx], hand)
-  ), new Map()).get(myPlayer);
-export const useRoomId = ({
-  roomId,
-  setRoomId
-}: StoreState): [RoomId, RoomIdSetter] => [roomId, setRoomId];
-export const getMakeHost = ({ makeHost }: StoreState) => makeHost;
-export const useMyPlayer = ({
-  myPlayer,
-  setMyPlayer,
-  addPlayer
-}: StoreState): [PlayerId, PlayerIdSetter, PlayerSetter] => [
-  myPlayer,
-  setMyPlayer,
-  addPlayer
-];
+export const setClient = (roomId: RoomId, client: Client) => store.setState({ client, roomId });
+export const getClient = ({ client }: PlayerStoreState) => client
+export const getRoomId = ({ roomId }: PlayerStoreState) => roomId
+export const setGameStarter = (startGame: GameStarter) =>  store.setState({ startGame })
+export const isHost = () => ({ startGame }: PlayerStoreState) => !!startGame;
+
+export const getMyName = ({ myName }: PlayerStoreState): PlayerId => myName;
+
+export const setNameError = (nameError: Err) =>
+  store.setState({ nameError, myName: "" });
+export const setMyName = (myName: PlayerId) => store.setState({ myName });
+
+export const setPlayers = (players: PlayerId[]) => store.setState({ players });
+export const getPlayers = ({ players }: PlayerStoreState) => players;
+
+export const getMyHand = (store: PlayerStoreState) => ([])
