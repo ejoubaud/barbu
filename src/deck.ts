@@ -16,6 +16,7 @@ export type Card = { color: Color; value: number };
 export const card = (color: Color, value: Value): Card => ({ color, value });
 
 export type Deck = Card[];
+export type Table = Card[];
 
 export const full: Deck = values.reduce(
   (deck: Deck, value: Value) =>
@@ -76,3 +77,14 @@ export const sortHand = (cards: Hand): Hand =>
 
 export const shuffleAndDealSortedHands = (players: number): Hand[] =>
   shuffleAndDealFor(players).map(sortHand);
+
+export const hasColor = (cards: Card[], colorToCheck: Color) =>
+  cards.some(({ color }) => colorToCheck === color);
+
+export const findCard = (cards: Card[], card: Card) =>
+  cards.findIndex(c => eq(c, card));
+
+export const removeCard = (cards: Card[], card: Card) => {
+  const index = findCard(cards, card);
+  return cards.slice(0, index).concat(cards.slice(index + 1, -1));
+};
