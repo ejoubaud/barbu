@@ -8,7 +8,7 @@ import * as serviceWorker from "./serviceWorker";
 
 import createServer from "./server";
 import initClient from "./client";
-import { RoomId, GameStarter } from "./common";
+import { RoomId, ServerGameStarter } from "./common";
 import { setClient, setGameStarter } from "./store";
 
 import { enableMapSet } from "immer";
@@ -19,13 +19,13 @@ const guestUrl = window.location.pathname.match("/join/(.*)$");
 if (guestUrl) {
   roomId = guestUrl[1];
 } else {
-  let startGame: GameStarter;
+  let startGame: ServerGameStarter;
   [roomId, startGame] = createServer();
   setGameStarter(startGame);
 }
-initClient(roomId).then((client) => {
+initClient(roomId).then(client => {
   setClient(roomId, client);
-})
+});
 
 ReactDOM.render(
   <React.StrictMode>

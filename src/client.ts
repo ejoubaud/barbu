@@ -1,5 +1,5 @@
 import { PlayerId, RoomId, Cmd, Evt } from "./common";
-import { setNameError, setMyName, setPlayers } from "./store";
+import { setError, setPlayers, setGameEvent } from "./store";
 import initNetworkClient from "./networkClient";
 
 export type Client = {
@@ -14,17 +14,20 @@ const initClient = async (roomId: RoomId) => {
   const networkClient = await initNetworkClient(roomId);
 
   const setName = async (name: PlayerId) => {
-    setMyName(name);
     networkClient.send({ cmd: Cmd.SetName, name });
   };
 
   networkClient.listen(event => {
     switch (event.type) {
-      case Evt.NameTakenError:
-        setNameError("Nom deja pris, choisis-en un autre");
+      case Evt.NameError:
+        // TODO: Handle in UI
+        setError(event.message);
         break;
       case Evt.PlayersUpdated:
-        setPlayers(event.players);
+        setPlayers(event.playerId, event.players);
+        break;
+      case Evt.GameEvent:
+        setGameEvent(event.gameStarted, event.event, event.state);
         break;
     }
   });

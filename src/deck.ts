@@ -4,7 +4,7 @@ export enum Color {
   Spades = "spades",
   Hearts = "hearts",
   Clubs = "clubs",
-  Diamonds = "diamonds"
+  Diamonds = "diamonds",
 }
 
 export type Value = number;
@@ -20,7 +20,7 @@ export type Table = Card[];
 
 export const full: Deck = values.reduce(
   (deck: Deck, value: Value) =>
-    deck.concat(Object.values(Color).map(color => card(color, value))),
+    deck.concat(Object.values(Color).map((color) => card(color, value))),
   []
 );
 
@@ -33,13 +33,13 @@ const cardsToRemove: Card[] = [
   { color: Color.Spades, value: 8 },
   { color: Color.Hearts, value: 8 },
   { color: Color.Clubs, value: 9 },
-  { color: Color.Diamonds, value: 9 }
+  { color: Color.Diamonds, value: 9 },
 ];
 
 export const fullFor = (players: number): Deck => {
   const removeCount = full.length % players;
   const removeCards = cardsToRemove.slice(0, removeCount);
-  return full.filter(c => !removeCards.some(r => eq(c, r)));
+  return full.filter((c) => !removeCards.some((r) => eq(c, r)));
 };
 
 export const shuffle: (deck: Deck) => Deck = _shuffle;
@@ -82,7 +82,7 @@ export const hasColor = (cards: Card[], colorToCheck: Color) =>
   cards.some(({ color }) => colorToCheck === color);
 
 export const findCard = (cards: Card[], card: Card) =>
-  cards.findIndex(c => eq(c, card));
+  cards.findIndex((c) => eq(c, card));
 
 export const removeCard = (cards: Card[], card: Card) => {
   const index = findCard(cards, card);

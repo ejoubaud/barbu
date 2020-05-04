@@ -3,12 +3,14 @@ import "./App.css";
 import "deck-of-cards/example/example.css";
 
 import WaitingRoom from "./WaitingRoom";
-// import MyHand from "./MyHand";
+import BarbuContainer from "./BarbuContainer";
+import { useStore, getGameStarted } from "./store";
 
 function App(): JSX.Element {
+  const isGameStarted = useStore(getGameStarted);
   return (
     <div className="App">
-      <WaitingRoom />
+      {isGameStarted ? <BarbuContainer /> : <WaitingRoom />}
     </div>
   );
 }

@@ -1,7 +1,15 @@
-import React, { useRef, FormEvent } from "react";
+import React, { useRef, useState, FormEvent } from "react";
 
 import "./WaitingRoom.css";
-import { useStore, getMyName, getClient, getRoomId, getPlayers } from "./store";
+import {
+  useStore,
+  getMyName,
+  getClient,
+  getError,
+  getRoomId,
+  getPlayers,
+  getGameStarter
+} from "./store";
 
 export type NameSubmitter = (evt: FormEvent<HTMLFormElement>) => void;
 
@@ -10,6 +18,12 @@ const WaitingRoom = () => {
   const client = useStore(getClient);
   const roomId = useStore(getRoomId);
   const players = useStore(getPlayers);
+  const startGame = useStore(getGameStarter);
+  const [isLoading, setLoading] = useState(false);
+  const error = useStore(getError, function eq(oldErr, newErr) {
+    if (isLoading && oldErr !== newErr) setLoading(false);
+    return oldErr === newErr;
+  });
 
   const url = `${window.location.host}/join/${roomId}`;
   const urlRef = useRef<HTMLPreElement>(null);
@@ -20,6 +34,7 @@ const WaitingRoom = () => {
       name: { value: string };
     };
     client.setName(target.name.value);
+    setLoading(true);
   };
 
   const selectUrl = () => {
@@ -75,12 +90,26 @@ const WaitingRoom = () => {
               ))}
             </ul>
           </div>
+          {startGame && (
+            <button
+              onClick={evt => {
+                startGame();
+              }}
+            >
+              Lancer le jeu
+            </button>
+          )}
         </>
       ) : (
         <form onSubmit={onNameSubmit}>
+          {error && <p className="alert-error">{error}</p>}
           <label htmlFor="name">Choisis ton nom:</label>
           <input id="name" name="name" type="text" />
-          <input type="submit" value="Rejoindre" />
+          <input
+            type="submit"
+            value={`Rejoindre${isLoading ? "..." : ""}`}
+            disabled={isLoading}
+          />
         </form>
       )}
     </div>

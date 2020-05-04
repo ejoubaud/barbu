@@ -1,6 +1,16 @@
 import produce from "immer";
 
-import { PlayerId } from "./common";
+import {
+  PlayerId,
+  GameEvent as CommonGameEvent,
+  PlayerGameState as CommonPlayerGameState,
+  Action,
+  ActionResult,
+  ActionProcessor,
+  GameStarter,
+  PlayerStateMapper
+} from "./common";
+
 import {
   Card,
   Color,
@@ -15,6 +25,7 @@ type Move = { player: PlayerId; card: Card };
 const Move = (player: PlayerId, card: Card): Move => ({ player, card });
 
 type Trick = Move[];
+type PlayerHands = { [PlayerId: string]: Hand };
 
 const trickWinner = (trick: Trick): PlayerId => {
   const winnerMove = trick.reduce((winnerMove, move) => {
@@ -130,9 +141,9 @@ enum Err {
   None = "Pas de soucis"
 }
 
-type GameState = {
+export type GameState = {
   players: PlayerId[];
-  hands: { [PlayerId: string]: Hand };
+  hands: PlayerHands;
   tricks: Trick[];
   currentTrick: Trick;
   currentPlayer: number;
@@ -150,10 +161,15 @@ const newGameState = (): GameState => ({
 });
 
 type HiddenHand = [PlayerId, number];
-const HiddenHand = (playerId: PlayerId, hand: Hand) => [playerId, hand.length];
-type PlayerGameState = {
+const HiddenHand = (playerId: PlayerId, hand: Hand): HiddenHand => [
+  playerId,
+  hand.length
+];
+
+export type PlayerGameState = CommonPlayerGameState & {
   players: PlayerId[];
   hands: HiddenHand[];
+  myHand: Hand;
   tricks: Trick[];
   currentTrick: Trick;
   currentPlayer: PlayerId;
@@ -161,15 +177,21 @@ type PlayerGameState = {
   contractScoreSheets: ScoreSheet[];
 };
 // needs to be JSONable to send via server
-export const gameStateForPlayer = (state: GameState, player: PlayerId) => ({
-  players: state.players,
-  hands: state.players.map(p => HiddenHand(p, state.hands[p])),
-  tricks: state.tricks,
-  currentPlayer: state.players[state.currentPlayer],
-  currentContract:
-    contracts[state.currentContract] && contracts[state.currentContract].name,
-  contractScoreSheets: state.contractScoreSheets
-});
+export const gameStateForPlayer: PlayerStateMapper = (commonState, player) => {
+  // TODO: Find a more gracious way to handle this when we have more than 1 game
+  const state = commonState as GameState;
+  return {
+    players: state.players,
+    hands: state.players.map(p => HiddenHand(p, state.hands[p])),
+    myHand: state.hands[player],
+    tricks: state.tricks,
+    currentTrick: state.currentTrick,
+    currentPlayer: state.players[state.currentPlayer],
+    currentContract:
+      contracts[state.currentContract] && contracts[state.currentContract].name,
+    contractScoreSheets: state.contractScoreSheets
+  };
+};
 
 enum EventType {
   GameStarted = "GameStarted",
@@ -179,23 +201,25 @@ enum EventType {
   ContractEnded = "ContractEnded",
   GameEnded = "GameEnded"
 }
-interface Event {
+export interface BarbuEvent extends CommonGameEvent {
   type: EventType;
 }
-type EventProcessor<T extends Event> = (
+type EventProcessor<T extends BarbuEvent> = (
   event: T
 ) => (state: GameState) => GameState;
 type EventCreator = (payload: EventPayload) => Event;
 type EventPayload = any;
 
-interface GameStarted extends Event {
+interface GameStarted extends BarbuEvent {
   players: PlayerId[];
+  hands: PlayerHands;
 }
 const GameStarted = (players: PlayerId[]): GameStarted => ({
   type: EventType.GameStarted,
-  players
+  players,
+  hands: deal(players)
 });
-const deal = (players: PlayerId[]): { [PlayerId: string]: Hand } => {
+const deal = (players: PlayerId[]): PlayerHands => {
   const handsList = shuffleAndDealFor(players.length);
   return players.reduce(
     (hands, playerId, idx) => ({ ...hands, [playerId]: handsList[idx] }),
@@ -203,18 +227,23 @@ const deal = (players: PlayerId[]): { [PlayerId: string]: Hand } => {
   );
 };
 const processGameStarted: EventProcessor<GameStarted> = ({
-  players
+  players,
+  hands
 }: GameStarted) => state => ({
   ...state,
-  hands: deal(players)
+  players,
+  hands
 });
 
-interface Rejected extends Event {
+interface Rejected extends BarbuEvent {
   err: Err;
 }
 const Rejected = (err: Err): Rejected => ({ type: EventType.Rejected, err });
+export const isError = (event: CommonGameEvent): event is Rejected =>
+  event.type === EventType.Rejected;
+export const errorMessage = ({ err }: Rejected): string => err;
 
-interface Played extends Event {
+interface Played extends BarbuEvent {
   move: Move;
 }
 const Played = (move: Move): Played => ({
@@ -229,7 +258,7 @@ const processPlayed: EventProcessor<Played> = ({ move }) =>
     state.hands[move.player] = removeCard(hand, move.card);
   });
 
-interface TrickEnded extends Event {
+interface TrickEnded extends BarbuEvent {
   trick: Trick;
 }
 const TrickEnded = (trick: Trick): TrickEnded => ({
@@ -246,7 +275,7 @@ const processTrickEnded: EventProcessor<TrickEnded> = ({ trick }) =>
 const isTrickEnd = ({ currentTrick, players }: GameState) =>
   currentTrick.length === players.length;
 
-interface ContractEnded extends Event {
+interface ContractEnded extends BarbuEvent {
   tricks: Trick[];
 }
 const ContractEnded = (tricks: Trick[]): ContractEnded => ({
@@ -265,10 +294,12 @@ const processContractEnded: EventProcessor<ContractEnded> = ({ tricks }) =>
 const isContractEnd = ({ hands }: GameState) =>
   Object.values(hands).every(h => h.length === 0);
 
-interface GameEnded extends Event {}
+interface GameEnded extends BarbuEvent {}
 const GameEnded = (): GameEnded => ({ type: EventType.GameEnded });
 const isGameEnd = ({ currentContract }: GameState) =>
   currentContract >= contracts.length;
+export const isGameOver = (event: CommonGameEvent) =>
+  event.type === EventType.GameEnded;
 
 const trickColor = (t: Trick): Color => t[0].card.color;
 export const canPlay = (
@@ -298,12 +329,6 @@ export const canPlay = (
   return [true, Err.None];
 };
 
-export type Action = { playerId: PlayerId; cards: Card[] };
-export type ActionResult = [Event, GameState];
-export type ActionProcessor = (action: Action) => ActionResult;
-export type GameStarter = (players: PlayerId[]) => StartResult;
-export type StartResult = [ActionProcessor, Event, GameState];
-
 export const start: GameStarter = players => {
   const gameStartedEvent: GameStarted = GameStarted(players);
   const initialState: GameState = processGameStarted(gameStartedEvent)(
@@ -312,7 +337,7 @@ export const start: GameStarter = players => {
 
   let state: GameState = initialState;
 
-  const play: ActionProcessor = (action: Action): ActionResult => {
+  const play: ActionProcessor = action => {
     const [event, newState] = ((oldState): ActionResult => {
       let state = oldState;
       let [success, error] = canPlay(action, oldState);
@@ -333,7 +358,7 @@ export const start: GameStarter = players => {
 
       return [GameEnded(), state];
     })(state);
-    state = newState;
+    state = newState as GameState;
     return [event, newState];
   };
 

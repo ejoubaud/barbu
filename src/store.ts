@@ -2,20 +2,30 @@
 import createStore from "zustand";
 
 import { Hand as ImportedHand } from "./deck";
-import { PlayerId as ImportedPlayerId, RoomId, GameStarter } from "./common";
+import {
+  PlayerId as ImportedPlayerId,
+  RoomId,
+  ServerGameStarter,
+  GameEvent,
+  PlayerGameState,
+  nullPlayerGameState,
+  nullGameEvent
+} from "./common";
 import { Client, nullClient } from "./client";
 
-type Err = string;
 export type PlayerId = ImportedPlayerId;
 export type Hand = ImportedHand;
 
-type PlayerStoreState = {
+export type PlayerStoreState = {
   client: Client;
-  startGame: GameStarter | null;
+  startGame: ServerGameStarter | null;
   roomId: RoomId;
   players: PlayerId[];
   myName: PlayerId;
-  nameError: Err;
+  error: string;
+  gameStarted: boolean;
+  gameState: PlayerGameState;
+  lastGameEvent: GameEvent;
 };
 
 export const [useStore, store] = createStore<PlayerStoreState>(set => ({
@@ -24,22 +34,38 @@ export const [useStore, store] = createStore<PlayerStoreState>(set => ({
   roomId: "",
   players: [],
   myName: "",
-  nameError: "",
+  error: "",
+  gameStarted: false,
+  gameState: nullPlayerGameState,
+  lastGameEvent: nullGameEvent
 }));
 
-export const setClient = (roomId: RoomId, client: Client) => store.setState({ client, roomId });
-export const getClient = ({ client }: PlayerStoreState) => client
-export const getRoomId = ({ roomId }: PlayerStoreState) => roomId
-export const setGameStarter = (startGame: GameStarter) =>  store.setState({ startGame })
-export const isHost = () => ({ startGame }: PlayerStoreState) => !!startGame;
+export const setClient = (roomId: RoomId, client: Client) =>
+  store.setState({ client, roomId });
+export const getClient = ({ client }: PlayerStoreState) => client;
+export const getRoomId = ({ roomId }: PlayerStoreState) => roomId;
+export const setGameStarter = (startGame: ServerGameStarter) =>
+  store.setState({ startGame });
+export const getGameStarter = ({ startGame }: PlayerStoreState) => startGame;
 
 export const getMyName = ({ myName }: PlayerStoreState): PlayerId => myName;
 
-export const setNameError = (nameError: Err) =>
-  store.setState({ nameError, myName: "" });
-export const setMyName = (myName: PlayerId) => store.setState({ myName });
+export const setError = (error: string) => store.setState({ error });
+export const getError = ({ error }: PlayerStoreState) => error;
 
-export const setPlayers = (players: PlayerId[]) => store.setState({ players });
+export const setPlayers = (myName: PlayerId, players: PlayerId[]) =>
+  store.setState({ myName, players });
 export const getPlayers = ({ players }: PlayerStoreState) => players;
 
-export const getMyHand = (store: PlayerStoreState) => ([])
+export const setGameEvent = (
+  gameStarted: boolean,
+  lastGameEvent: GameEvent,
+  gameState: PlayerGameState
+) => store.setState({ gameStarted, lastGameEvent, gameState });
+
+export const getGame = ({ gameState, lastGameEvent }: PlayerStoreState) => ({
+  gameState,
+  lastGameEvent
+});
+export const getGameStarted = ({ gameStarted }: PlayerStoreState) =>
+  gameStarted;

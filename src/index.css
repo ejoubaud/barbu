@@ -52,3 +52,7 @@ input[type=submit]:hover {
 .btn-ghost:hover {
   filter: brightness(98%);
 }
+
+.alert-error {
+  color: red;
+}
