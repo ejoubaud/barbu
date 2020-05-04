@@ -4,7 +4,7 @@ export enum Color {
   Spades = "spades",
   Hearts = "hearts",
   Clubs = "clubs",
-  Diamonds = "diamonds",
+  Diamonds = "diamonds"
 }
 
 export type Value = number;
@@ -20,7 +20,7 @@ export type Table = Card[];
 
 export const full: Deck = values.reduce(
   (deck: Deck, value: Value) =>
-    deck.concat(Object.values(Color).map((color) => card(color, value))),
+    deck.concat(Object.values(Color).map(color => card(color, value))),
   []
 );
 
@@ -33,13 +33,13 @@ const cardsToRemove: Card[] = [
   { color: Color.Spades, value: 8 },
   { color: Color.Hearts, value: 8 },
   { color: Color.Clubs, value: 9 },
-  { color: Color.Diamonds, value: 9 },
+  { color: Color.Diamonds, value: 9 }
 ];
 
 export const fullFor = (players: number): Deck => {
   const removeCount = full.length % players;
   const removeCards = cardsToRemove.slice(0, removeCount);
-  return full.filter((c) => !removeCards.some((r) => eq(c, r)));
+  return full.filter(c => !removeCards.some(r => eq(c, r)));
 };
 
 export const shuffle: (deck: Deck) => Deck = _shuffle;
@@ -60,11 +60,18 @@ export const dealFor = (players: number): Hand[] =>
 export const shuffleAndDealFor = (players: number): Hand[] =>
   deal(_shuffle(fullFor(players)), players);
 
+const colorOrder = {
+  [Color.Diamonds]: 0,
+  [Color.Clubs]: 1,
+  [Color.Hearts]: 2,
+  [Color.Spades]: 3
+};
+
 export const sortHand = (cards: Hand): Hand =>
   cards.sort((card1, card2) => {
-    if (card1.color < card2.color) {
+    if (colorOrder[card1.color] < colorOrder[card2.color]) {
       return -1;
-    } else if (card1.color > card2.color) {
+    } else if (colorOrder[card1.color] > colorOrder[card2.color]) {
       return 1;
     } else if (card1.value < card2.value) {
       return -1;
@@ -82,7 +89,7 @@ export const hasColor = (cards: Card[], colorToCheck: Color) =>
   cards.some(({ color }) => colorToCheck === color);
 
 export const findCard = (cards: Card[], card: Card) =>
-  cards.findIndex((c) => eq(c, card));
+  cards.findIndex(c => eq(c, card));
 
 export const removeCard = (cards: Card[], card: Card) => {
   const index = findCard(cards, card);

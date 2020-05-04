@@ -15,7 +15,9 @@ import {
   Card,
   Color,
   Hand,
-  shuffleAndDealFor,
+  shuffle,
+  fullFor,
+  deal,
   hasColor,
   findCard,
   removeCard
@@ -39,6 +41,30 @@ const trickWinner = (trick: Trick): PlayerId => {
   }, trick[0]);
   return winnerMove.player;
 };
+
+const colorOrder = {
+  [Color.Diamonds]: 0,
+  [Color.Clubs]: 1,
+  [Color.Hearts]: 2,
+  [Color.Spades]: 3
+};
+
+const cardValue = ({ value }: Card) => (value === 1 ? 14 : value);
+
+export const sortHand = (cards: Hand): Hand =>
+  cards.sort((card1, card2) => {
+    if (colorOrder[card1.color] < colorOrder[card2.color]) {
+      return -1;
+    } else if (colorOrder[card1.color] > colorOrder[card2.color]) {
+      return 1;
+    } else if (cardValue(card1) < cardValue(card2)) {
+      return -1;
+    } else if (cardValue(card1) > cardValue(card2)) {
+      return 1;
+    } else {
+      return 0;
+    }
+  });
 
 type ContractName = string;
 type Contract = { name: ContractName; scorer: ContractScorer };
@@ -217,10 +243,12 @@ interface GameStarted extends BarbuEvent {
 const GameStarted = (players: PlayerId[]): GameStarted => ({
   type: EventType.GameStarted,
   players,
-  hands: deal(players)
+  hands: dealBarbu(players)
 });
-const deal = (players: PlayerId[]): PlayerHands => {
-  const handsList = shuffleAndDealFor(players.length);
+const dealBarbu = (players: PlayerId[]): PlayerHands => {
+  const handsList = deal(shuffle(fullFor(players.length)), players.length).map(
+    sortHand
+  );
   return players.reduce(
     (hands, playerId, idx) => ({ ...hands, [playerId]: handsList[idx] }),
     {}
@@ -288,7 +316,7 @@ const processContractEnded: EventProcessor<ContractEnded> = ({ tricks }) =>
     const scoreSheet = contract.scorer(tricks)(newSheet());
     s.contractScoreSheets.push(scoreSheet);
     s.currentContract += 1;
-    s.hands = deal(s.players);
+    s.hands = dealBarbu(s.players);
   });
 // TODO: Add EventPredicate<T extends Event> interface?
 const isContractEnd = ({ hands }: GameState) =>
