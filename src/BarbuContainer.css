@@ -1,3 +1,5 @@
+@import "./variables.css";
+
 .BarbuContainer {
   display: flex;
   flex-flow: column nowrap;
@@ -10,6 +12,13 @@
   margin: var(--rhythm);
   padding: var(--rhythm);
   text-align: center;
+}
+.BarbuContainer__CurrentTrick {
+  min-height: 300px;
+  margin: var(--rhythm);
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 .BarbuContainer__MyHand {
   display: block;

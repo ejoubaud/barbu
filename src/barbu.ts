@@ -26,7 +26,7 @@ import {
 type Move = { player: PlayerId; card: Card };
 const Move = (player: PlayerId, card: Card): Move => ({ player, card });
 
-type Trick = Move[];
+export type Trick = Move[];
 type PlayerHands = { [PlayerId: string]: Hand };
 
 const trickWinner = (trick: Trick): PlayerId => {

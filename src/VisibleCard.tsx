@@ -7,14 +7,14 @@ import "./VisibleCard.css";
 type VisibleCardProps = {
   card: Card;
   depth: number;
-  isPlayable: boolean;
+  isPlayable?: boolean;
   onClick?: (card: Card) => () => void;
 };
 
 const VisibleCard = ({
   card,
   depth,
-  isPlayable,
+  isPlayable = false,
   onClick
 }: VisibleCardProps) => (
   <div

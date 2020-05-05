@@ -11,7 +11,7 @@ type MyBarbuHandProps = {
 
 const MyBarbuHand = ({ hand, onCardPlayed }: MyBarbuHandProps) => {
   return (
-    <div className="MyBarbuHand">
+    <>
       {hand.map((card, idx) => (
         <div key={idx} className="MyBarbuHand__CardContainer">
           <VisibleCard
@@ -22,7 +22,7 @@ const MyBarbuHand = ({ hand, onCardPlayed }: MyBarbuHandProps) => {
           />
         </div>
       ))}
-    </div>
+    </>
   );
 };
 

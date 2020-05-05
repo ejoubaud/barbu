@@ -32,3 +32,5 @@ export const getMyHand = ({ gameState }: BarbuStoreState) => gameState.myHand;
 export const getMyName = ({ gameState }: BarbuStoreState) => gameState.myName;
 export const getCurrentPlayer = ({ gameState }: BarbuStoreState) =>
   gameState.currentPlayer;
+export const getCurrentTrick = ({ gameState }: BarbuStoreState) =>
+  gameState.currentTrick;
