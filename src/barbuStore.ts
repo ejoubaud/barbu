@@ -34,3 +34,5 @@ export const getCurrentPlayer = ({ gameState }: BarbuStoreState) =>
   gameState.currentPlayer;
 export const getCurrentTrick = ({ gameState }: BarbuStoreState) =>
   gameState.currentTrick;
+export const getCurrentContract = ({ gameState }: BarbuStoreState) =>
+  gameState.currentContract;
