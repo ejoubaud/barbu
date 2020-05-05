@@ -1,5 +1,6 @@
 import Peer from "peerjs";
 import createStore from "zustand";
+import shallow from "zustand/shallow";
 import produce from "immer";
 
 import { Card } from "./deck";
@@ -157,7 +158,8 @@ const createServer = (roomId = newRoomId()): Server => {
         });
       });
     }),
-    ({ players, clients }: ServerState) => ({ players, clients })
+    ({ players, clients }: ServerState) => ({ players, clients }),
+    shallow
   );
 
   store.subscribe(
@@ -184,7 +186,8 @@ const createServer = (roomId = newRoomId()): Server => {
       clients,
       gameState,
       gameStarted
-    })
+    }),
+    shallow
   );
 
   const peer = new Peer(`barbu-room-${roomId}`);
