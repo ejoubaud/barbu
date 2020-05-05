@@ -2,6 +2,7 @@ import Peer from "peerjs";
 import createStore from "zustand";
 import produce from "immer";
 
+import { Card } from "./deck";
 import {
   PlayerId,
   RoomId,
@@ -102,8 +103,18 @@ const createServer = (roomId = newRoomId()): Server => {
     });
   };
 
-  const play = (clientId: ClientId, action: Action) => {
-    const { playTurn } = store.getState();
+  const play = (clientId: ClientId, cards: Card[]) => {
+    const { playTurn, clients } = store.getState();
+    const playerId = clients[clientId].playerId;
+    if (!playerId) {
+      sendError(
+        clientId,
+        Evt.ActionError,
+        "Vous n'êtes pas un joueur de cette partie"
+      );
+      return;
+    }
+    const action = Action(playerId, cards);
     const [lastGameEvent, gameState] = playTurn(action);
     if (isError(lastGameEvent)) {
       // reply with error
@@ -203,7 +214,7 @@ const createServer = (roomId = newRoomId()): Server => {
       if (message.cmd === Cmd.SetName) {
         setName(conn.peer, message.name);
       } else if (message.cmd === Cmd.Play) {
-        play(conn.peer, message.action);
+        play(conn.peer, message.cards);
       }
     });
 

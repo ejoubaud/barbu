@@ -9,7 +9,7 @@ import * as serviceWorker from "./serviceWorker";
 import createServer from "./server";
 import initClient from "./client";
 import { RoomId, ServerGameStarter } from "./common";
-import { setClient, setGameStarter } from "./store";
+import { setClient, setGameStarter } from "./playerStore";
 
 import { enableMapSet } from "immer";
 enableMapSet();

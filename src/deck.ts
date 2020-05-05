@@ -54,37 +54,6 @@ export const deal = (deck: Deck, players: number): Hand[] => {
   );
 };
 
-export const dealFor = (players: number): Hand[] =>
-  deal(fullFor(players), players);
-
-export const shuffleAndDealFor = (players: number): Hand[] =>
-  deal(_shuffle(fullFor(players)), players);
-
-const colorOrder = {
-  [Color.Diamonds]: 0,
-  [Color.Clubs]: 1,
-  [Color.Hearts]: 2,
-  [Color.Spades]: 3
-};
-
-export const sortHand = (cards: Hand): Hand =>
-  cards.sort((card1, card2) => {
-    if (colorOrder[card1.color] < colorOrder[card2.color]) {
-      return -1;
-    } else if (colorOrder[card1.color] > colorOrder[card2.color]) {
-      return 1;
-    } else if (card1.value < card2.value) {
-      return -1;
-    } else if (card1.value > card2.value) {
-      return 1;
-    } else {
-      return 0;
-    }
-  });
-
-export const shuffleAndDealSortedHands = (players: number): Hand[] =>
-  shuffleAndDealFor(players).map(sortHand);
-
 export const hasColor = (cards: Card[], colorToCheck: Color) =>
   cards.some(({ color }) => colorToCheck === color);
 

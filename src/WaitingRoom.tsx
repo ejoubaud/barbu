@@ -2,25 +2,25 @@ import React, { useRef, useState, FormEvent } from "react";
 
 import "./WaitingRoom.css";
 import {
-  useStore,
+  usePlayerStore,
   getMyName,
   getClient,
   getError,
   getRoomId,
   getPlayers,
   getGameStarter
-} from "./store";
+} from "./playerStore";
 
 export type NameSubmitter = (evt: FormEvent<HTMLFormElement>) => void;
 
 const WaitingRoom = () => {
-  const myName = useStore(getMyName);
-  const client = useStore(getClient);
-  const roomId = useStore(getRoomId);
-  const players = useStore(getPlayers);
-  const startGame = useStore(getGameStarter);
+  const myName = usePlayerStore(getMyName);
+  const client = usePlayerStore(getClient);
+  const roomId = usePlayerStore(getRoomId);
+  const players = usePlayerStore(getPlayers);
+  const startGame = usePlayerStore(getGameStarter);
   const [isLoading, setLoading] = useState(false);
-  const error = useStore(getError, function eq(oldErr, newErr) {
+  const error = usePlayerStore(getError, function eq(oldErr, newErr) {
     if (isLoading && oldErr !== newErr) setLoading(false);
     return oldErr === newErr;
   });

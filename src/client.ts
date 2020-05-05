@@ -1,20 +1,27 @@
 import { PlayerId, RoomId, Cmd, Evt } from "./common";
-import { setError, setPlayers, setGameEvent } from "./store";
+import { Card } from "./deck";
+import { setError, setPlayers, setGameEvent } from "./playerStore";
 import initNetworkClient from "./networkClient";
 
 export type Client = {
   setName: (name: PlayerId) => void;
+  playCards: (cards: Card[]) => void;
 };
 
 export const nullClient: Client = {
-  setName: () => {}
+  setName: () => {},
+  playCards: (cards: Card[]) => {}
 };
 
 const initClient = async (roomId: RoomId) => {
   const networkClient = await initNetworkClient(roomId);
 
-  const setName = async (name: PlayerId) => {
+  const setName = (name: PlayerId) => {
     networkClient.send({ cmd: Cmd.SetName, name });
+  };
+
+  const playCards = (cards: Card[]) => {
+    networkClient.send({ cmd: Cmd.Play, cards });
   };
 
   networkClient.listen(event => {
@@ -32,7 +39,7 @@ const initClient = async (roomId: RoomId) => {
     }
   });
 
-  return { setName };
+  return { setName, playCards };
 };
 
 export default initClient;

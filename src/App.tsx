@@ -4,10 +4,10 @@ import "deck-of-cards/example/example.css";
 
 import WaitingRoom from "./WaitingRoom";
 import BarbuContainer from "./BarbuContainer";
-import { useStore, getGameStarted } from "./store";
+import { usePlayerStore, getGameStarted } from "./playerStore";
 
 function App(): JSX.Element {
-  const isGameStarted = useStore(getGameStarted);
+  const isGameStarted = usePlayerStore(getGameStarted);
   return (
     <div className="App">
       {isGameStarted ? <BarbuContainer /> : <WaitingRoom />}

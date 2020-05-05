@@ -2,7 +2,7 @@
 import createStore from "zustand";
 
 import { notNull } from "./common";
-import { store as playerStore, getGame } from "./store";
+import { playerStore, getGame } from "./playerStore";
 import { PlayerGameState, BarbuEvent } from "./barbu";
 
 type BarbuStoreState = {
@@ -29,3 +29,6 @@ playerStore.subscribe(
 );
 
 export const getMyHand = ({ gameState }: BarbuStoreState) => gameState.myHand;
+export const getMyName = ({ gameState }: BarbuStoreState) => gameState.myName;
+export const getCurrentPlayer = ({ gameState }: BarbuStoreState) =>
+  gameState.currentPlayer;

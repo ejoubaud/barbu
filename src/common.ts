@@ -47,6 +47,10 @@ export interface GameEvent {
 }
 
 export type Action = { playerId: PlayerId; cards: Card[] };
+export const Action = (playerId: PlayerId, cards: Card[]): Action => ({
+  playerId,
+  cards
+});
 export type ActionResult = [GameEvent, GameState];
 export type ActionProcessor = (action: Action) => ActionResult;
 

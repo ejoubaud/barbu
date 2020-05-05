@@ -195,6 +195,7 @@ const HiddenHand = (playerId: PlayerId, hand: Hand): HiddenHand => [
 export type PlayerGameState = CommonPlayerGameState & {
   players: PlayerId[];
   hands: HiddenHand[];
+  myName: PlayerId;
   myHand: Hand;
   tricks: Trick[];
   currentTrick: Trick;
@@ -209,6 +210,7 @@ export const gameStateForPlayer: PlayerStateMapper = (commonState, player) => {
   return {
     players: state.players,
     hands: state.players.map(p => HiddenHand(p, state.hands[p])),
+    myName: player,
     myHand: state.hands[player],
     tricks: state.tricks,
     currentTrick: state.currentTrick,
