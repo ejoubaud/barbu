@@ -8,7 +8,7 @@ import {
   getCurrentPlayer,
   getCurrentTrick
 } from "./barbuStore";
-import { usePlayerStore, getClient } from "./playerStore";
+import { usePlayerStore, getClient, getError } from "./playerStore";
 
 import MyBarbuHand from "./MyBarbuHand";
 import CurrentTrick from "./CurrentTrick";
@@ -22,6 +22,7 @@ const BarbuContainer = () => {
   const currentTrick = useBarbuStore(getCurrentTrick);
   const client = usePlayerStore(getClient);
   const playCard = (card: Card) => () => client.playCards([card]);
+  const error = usePlayerStore(getError);
 
   return (
     <div className="BarbuContainer">
@@ -29,7 +30,9 @@ const BarbuContainer = () => {
         <CurrentTrick trick={currentTrick} />
       </div>
       <div className="BarbuContainer__Message">
-        C'est à {myName === currentPlayer ? "vous" : currentPlayer}
+        {error && `${error} - `}
+        C'est{" "}
+        {myName === currentPlayer ? "au con qui demande" : `à ${currentPlayer}`}
       </div>
       <div className="BarbuContainer__MyHand">
         <MyBarbuHand hand={myHand} onCardPlayed={playCard} />

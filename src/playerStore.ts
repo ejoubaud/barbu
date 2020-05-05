@@ -61,7 +61,7 @@ export const setGameEvent = (
   gameStarted: boolean,
   lastGameEvent: GameEvent,
   gameState: PlayerGameState
-) => playerStore.setState({ gameStarted, lastGameEvent, gameState });
+) => playerStore.setState({ gameStarted, lastGameEvent, gameState, error: "" });
 
 export const getGame = ({ gameState, lastGameEvent }: PlayerStoreState) => ({
   gameState,

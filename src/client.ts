@@ -36,6 +36,9 @@ const initClient = async (roomId: RoomId) => {
       case Evt.GameEvent:
         setGameEvent(event.gameStarted, event.event, event.state);
         break;
+      case Evt.ActionError:
+        setError(event.message);
+        break;
     }
   });
 
