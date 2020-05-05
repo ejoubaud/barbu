@@ -1,0 +1,8 @@
+.VisibleCard {
+  position: relative;
+  left: auto;
+  top: auto;
+}
+.VisibleCard--playable {
+  cursor: pointer;
+}

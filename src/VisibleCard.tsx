@@ -2,6 +2,8 @@ import React from "react";
 
 import { Card } from "./deck";
 
+import "./VisibleCard.css";
+
 type VisibleCardProps = {
   card: Card;
   depth: number;
@@ -16,8 +18,8 @@ const VisibleCard = ({
   onClick
 }: VisibleCardProps) => (
   <div
-    className={`card rank${card.value} ${card.color} ${
-      isPlayable && "playable-card"
+    className={`VisibleCard card rank${card.value} ${card.color} ${
+      isPlayable && "VisibleCard--playable"
     }`}
     style={{ zIndex: depth }}
     onClick={onClick && onClick(card)}

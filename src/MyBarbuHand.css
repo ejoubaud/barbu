@@ -1,13 +1,13 @@
 @import "./variables.css";
 
-.hand-container {
+.MyBarbuHand {
   display: block;
   position: absolute;
   bottom: 20px;
   left: 0;
   right: 0;
 }
-.hand-message {
+.MyBarbuHand__Message {
   background-color: white;
   border-radius: var(--box-radius);
   background-color: rgba(255, 255, 255, 0.5);
@@ -16,16 +16,8 @@
   padding: var(--rhythm);
   text-align: center;
 }
-.card-container {
+.MyBarbuHand__CardContainer {
   position: relative;
   display: inline-block;
   margin: 0 5px;
-}
-.card {
-  position: relative;
-  left: auto;
-  top: auto;
-}
-.playable-card {
-  cursor: pointer;
 }

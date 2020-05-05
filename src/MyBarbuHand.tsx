@@ -19,12 +19,12 @@ const MyBarbuHand = ({
   onCardPlayed
 }: MyBarbuHandProps) => {
   return (
-    <div className="hand-container">
-      <div className="hand-message">
+    <div className="MyBarbuHand">
+      <div className="MyBarbuHand__Message">
         C'est à {myName === currentPlayer ? "vous" : currentPlayer}
       </div>
       {hand.map((card, idx) => (
-        <div key={idx} className="card-container">
+        <div key={idx} className="MyBarbuHand__CardContainer">
           <VisibleCard
             card={card}
             depth={idx}
