@@ -11,6 +11,8 @@ import { usePlayerStore, getClient } from "./playerStore";
 
 import MyBarbuHand from "./MyBarbuHand";
 
+import "./BarbuContainer.css";
+
 const BarbuContainer = () => {
   const myHand = useBarbuStore(getMyHand);
   const myName = useBarbuStore(getMyName);
@@ -19,14 +21,14 @@ const BarbuContainer = () => {
   const playCard = (card: Card) => () => client.playCards([card]);
 
   return (
-    <>
-      <MyBarbuHand
-        hand={myHand}
-        myName={myName}
-        currentPlayer={currentPlayer}
-        onCardPlayed={playCard}
-      />
-    </>
+    <div className="BarbuContainer">
+      <div className="BarbuContainer__Message">
+        C'est à {myName === currentPlayer ? "vous" : currentPlayer}
+      </div>
+      <div className="BarbuContainer__MyHand">
+        <MyBarbuHand hand={myHand} onCardPlayed={playCard} />
+      </div>
+    </div>
   );
 };
 
