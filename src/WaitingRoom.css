@@ -27,7 +27,7 @@ button.WaitingRoom__CopyUrlBtn i {
 }
 
 .WaitingRoom__PlayerList {
-  margin-top: var(--rhythm);
+  margin: var(--rhythm) 0;
   list-style: none;
   border: solid #aaa 0;
   border-top-width: 1px;

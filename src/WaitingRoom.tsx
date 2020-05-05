@@ -90,7 +90,7 @@ const WaitingRoom = () => {
               ))}
             </ul>
           </div>
-          {startGame && (
+          {startGame ? (
             <button
               onClick={evt => {
                 startGame();
@@ -98,6 +98,8 @@ const WaitingRoom = () => {
             >
               Lancer le jeu
             </button>
+          ) : (
+            <p>La partie commencera au signal de l'hôte.</p>
           )}
         </>
       ) : (
