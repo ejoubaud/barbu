@@ -9,11 +9,19 @@ body {
 }
 
 code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+  font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New",
     monospace;
 }
 
-h1, h2, h3, h4, h5, h6, p, label, pre {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p,
+label,
+pre {
   margin-bottom: var(--rhythm);
   color: var(--color-text-dark);
 }
@@ -21,7 +29,8 @@ h1, h2, h3, h4, h5, h6, p, label, pre {
 label {
   display: block;
 }
-input, button {
+input,
+button {
   font-size: 1rem;
   display: block;
   height: var(--input-height);
@@ -29,9 +38,9 @@ input, button {
   outline: 0;
 }
 button,
-input[type=button],
-input[type=submit] {
-  display:inline-block;
+input[type="button"],
+input[type="submit"] {
+  display: inline-block;
   padding: 0 1.5rem;
   height: var(--input-height);
   background-color: var(--color-mat);
@@ -41,8 +50,8 @@ input[type=submit] {
   margin-top: 0.7rem;
 }
 button:hover,
-input[type=button]:hover,
-input[type=submit]:hover {
+input[type="button"]:hover,
+input[type="submit"]:hover {
   filter: brightness(103%);
 }
 .btn-ghost {
