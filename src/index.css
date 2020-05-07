@@ -5,6 +5,7 @@ body {
   font-family: Tahoma, Geneva, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  overflow: visible !important; /* override deck-of-cards container overflow: hidden to allow scrolling */
 }
 
 code {
