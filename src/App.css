@@ -2,6 +2,9 @@
 
 .App {
   text-align: center;
+  position: relative;
+  min-height: 800px;
+  min-height: 100vh;
 }
 
 .App-logo {

@@ -5,9 +5,10 @@
   display: inline-block;
   padding: var(--box-padding);
   border-radius: var(--box-radius);
-  position: relative;
-  top: 40%;
-  transform: translateY(-40%);
+  position: absolute;
+  top: 45%;
+  left: 50%;
+  transform: translate(-50%, -50%);
   user-select: text;
 }
 
