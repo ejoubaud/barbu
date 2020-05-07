@@ -19,7 +19,7 @@ import {
   fullFor,
   deal,
   hasColor,
-  findCard,
+  hasCard,
   removeCard
 } from "./deck";
 
@@ -33,7 +33,10 @@ const trickWinner = (trick: Trick): PlayerId => {
   const winnerMove = trick.reduce((winnerMove, move) => {
     const highCard = winnerMove.card;
     const { card } = move;
-    if (card.color === highCard.color && card.value > highCard.value) {
+    if (
+      card.color === highCard.color &&
+      cardValue(card) > cardValue(highCard)
+    ) {
       return move;
     } else {
       return winnerMove;
@@ -41,6 +44,14 @@ const trickWinner = (trick: Trick): PlayerId => {
   }, trick[0]);
   return winnerMove.player;
 };
+
+type PlayerTricks = { [playerId: string]: Trick[] };
+const tricksByWinner = (tricks: Trick[]) =>
+  tricks.reduce((byWinner, trick) => {
+    const winner = trickWinner(trick);
+    byWinner[winner] = (byWinner[winner] || []).concat([trick]);
+    return byWinner;
+  }, {} as PlayerTricks);
 
 const colorOrder = {
   [Color.Diamonds]: 0,
@@ -186,18 +197,14 @@ const newGameState = (): GameState => ({
   contractScoreSheets: []
 });
 
-type HiddenHand = [PlayerId, number];
-const HiddenHand = (playerId: PlayerId, hand: Hand): HiddenHand => [
-  playerId,
-  hand.length
-];
+type PlayerHandSizes = { [playerId: string]: number };
 
 export type PlayerGameState = CommonPlayerGameState & {
   players: PlayerId[];
-  hands: HiddenHand[];
   myName: PlayerId;
   myHand: Hand;
-  tricks: Trick[];
+  playerHandSizes: PlayerHandSizes;
+  playerTricks: PlayerTricks;
   currentTrick: Trick;
   currentPlayer: PlayerId;
   currentContract: ContractName | null | undefined;
@@ -209,10 +216,13 @@ export const gameStateForPlayer: PlayerStateMapper = (commonState, player) => {
   const state = commonState as GameState;
   return {
     players: state.players,
-    hands: state.players.map(p => HiddenHand(p, state.hands[p])),
     myName: player,
     myHand: state.hands[player],
-    tricks: state.tricks,
+    playerTricks: tricksByWinner(state.tricks),
+    playerHandSizes: state.players.reduce((hs, p) => {
+      hs[p] = state.hands[p].length;
+      return hs;
+    }, {} as PlayerHandSizes),
     currentTrick: state.currentTrick,
     currentPlayer: state.players[state.currentPlayer],
     currentContract:
@@ -319,6 +329,7 @@ const processContractEnded: EventProcessor<ContractEnded> = ({ tricks }) =>
     s.contractScoreSheets.push(scoreSheet);
     s.currentContract += 1;
     s.hands = dealBarbu(s.players);
+    s.tricks = [];
   });
 // TODO: Add EventPredicate<T extends Event> interface?
 const isContractEnd = ({ hands }: GameState) =>
@@ -353,7 +364,7 @@ export const canPlay = (
     }
   }
   if (currentTrick.length >= players.length) return [false, Err.TrickOver];
-  if (!findCard(playerHand, card)) return [false, Err.NotInHand];
+  if (!hasCard(playerHand, card)) return [false, Err.NotInHand];
   if (contractScoreSheets.length >= contracts.length)
     return [false, Err.GameOver];
   return [true, Err.None];

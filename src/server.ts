@@ -70,6 +70,10 @@ const createServer = (roomId = newRoomId()): Server => {
 
   const setName = (clientId: ClientId, name: PlayerId) => {
     const s = store.getState();
+    if (!name.trim()) {
+      sendError(clientId, Evt.NameError, "Nom vide");
+      return;
+    }
     if (s.gameStarted) {
       sendError(
         clientId,
@@ -170,7 +174,7 @@ const createServer = (roomId = newRoomId()): Server => {
       gameStarted
     }) {
       if (!gameStarted) return;
-      console.log("broadcasting event", lastGameEvent);
+      console.log("broadcasting event", lastGameEvent, gameState);
       Object.values(clients).forEach(client => {
         if (!client.playerId) return; // TODO: Handle spectator state
         client.send({

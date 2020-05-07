@@ -57,10 +57,13 @@ export const deal = (deck: Deck, players: number): Hand[] => {
 export const hasColor = (cards: Card[], colorToCheck: Color) =>
   cards.some(({ color }) => colorToCheck === color);
 
-export const findCard = (cards: Card[], card: Card) =>
+const cardIndex = (cards: Card[], card: Card) =>
   cards.findIndex(c => eq(c, card));
 
+export const hasCard = (cards: Card[], card: Card) =>
+  cardIndex(cards, card) >= 0;
+
 export const removeCard = (cards: Card[], card: Card) => {
-  const index = findCard(cards, card);
-  return cards.slice(0, index).concat(cards.slice(index + 1, -1));
+  const index = cardIndex(cards, card);
+  return cards.slice(0, index).concat(cards.slice(index + 1, cards.length + 1));
 };
