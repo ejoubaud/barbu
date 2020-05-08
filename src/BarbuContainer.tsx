@@ -17,6 +17,7 @@ import { usePlayerStore, getClient, getError } from "./playerStore";
 import MyBarbuHand from "./MyBarbuHand";
 import CurrentTrick from "./CurrentTrick";
 import OtherPlayer from "./OtherPlayer";
+import Tricks from "./Tricks";
 
 import "./BarbuContainer.css";
 
@@ -81,6 +82,10 @@ const BarbuContainer = () => {
             />
           ))}
         </div>
+      </div>
+
+      <div className="BarbuContainer__MyTricks">
+        <Tricks tricks={playerTricks[myName] || []} />
       </div>
 
       <div className="BarbuContainer__Message">

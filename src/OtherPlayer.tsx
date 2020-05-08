@@ -3,9 +3,11 @@ import React from "react";
 import { PlayerId } from "./common";
 import { Trick } from "./barbu";
 
-import VisibleCard from "./VisibleCard";
+import Tricks from "./Tricks";
 
 import "./OtherPlayer.css";
+
+import "./Tricks.css";
 
 type OtherPlayerProps = {
   name: PlayerId;
@@ -29,19 +31,7 @@ const OtherPlayer = ({ name, tricks, handSize }: OtherPlayerProps) => {
           </div>
         </div>
 
-        {tricks.map((trick, trickIdx) => (
-          <div
-            className="OtherPlayer__Trick"
-            key={trickIdx}
-            style={{ zIndex: trickIdx }}
-          >
-            {trick.map(({ card }, cardIdx) => (
-              <div className="OtherPlayer__TrickCardContainer" key={cardIdx}>
-                <VisibleCard card={card} depth={cardIdx} />
-              </div>
-            ))}
-          </div>
-        ))}
+        <Tricks tricks={tricks} />
       </div>
     </div>
   );

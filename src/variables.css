@@ -9,5 +9,7 @@
 
   --color-mat: #45a173;
   --color-bg-light: white;
-  --opacity-bg-message: 0.5;
+
+  --size-card-height: 5.5rem;
+  --size-card-width: 3.875rem;
 }

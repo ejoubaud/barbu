@@ -19,14 +19,14 @@
 .OtherPlayer__HandContainer {
   position: relative;
   display: inline-block;
-  transform: scale(0.5);
-  transform-origin: top left;
+  height: calc(var(--size-card-height) / 2);
+  width: calc(var(--size-card-width) / 2);
 }
 .OtherPlayer__HandSize {
   position: absolute;
   top: 45%;
   left: 50%;
-  transform: translateY(-50%) translateX(-50%) scale(1.5);
+  transform: translateY(-50%) translateX(-50%);
   transform-origin: center center;
   background-color: rgba(255, 255, 255, 0.8);
   border-radius: var(--box-radius);
@@ -34,20 +34,9 @@
   padding: 3px;
 }
 .OtherPlayer__HandCard {
-  position: relative;
-  left: auto;
-  top: auto;
-}
-
-.OtherPlayer__Trick {
-  position: relative;
-  display: inline-block;
+  position: absolute;
+  left: 0;
+  top: 0;
   transform: scale(0.5);
   transform-origin: top left;
-  padding-right: 25px;
-}
-.OtherPlayer__TrickCardContainer {
-  position: relative;
-  display: inline-block;
-  width: 8px;
 }
