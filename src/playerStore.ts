@@ -20,6 +20,7 @@ export type PlayerStoreState = {
   myName: PlayerId;
   error: string;
   gameStarted: boolean;
+  connected: boolean;
   gameState: PlayerGameState;
   lastGameEvent: GameEvent;
 };
@@ -33,6 +34,7 @@ export const [usePlayerStore, playerStore] = createStore<PlayerStoreState>(
     myName: "",
     error: "",
     gameStarted: false,
+    connected: false,
     gameState: nullPlayerGameState,
     lastGameEvent: nullGameEvent
   })
@@ -69,3 +71,7 @@ export const getGame = ({ gameState, lastGameEvent }: PlayerStoreState) => ({
 });
 export const getGameStarted = ({ gameStarted }: PlayerStoreState) =>
   gameStarted;
+
+export const getConnected = ({ connected }: PlayerStoreState) => connected;
+export const setConnected = (connected: boolean) =>
+  playerStore.setState({ connected });

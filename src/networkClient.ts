@@ -18,13 +18,17 @@ export type NetworkClient = {
   listen: (listener: NetworkListener) => void;
 };
 
-const initClient = async (roomId: RoomId): Promise<NetworkClient> => {
+const initClient = async (
+  roomId: RoomId,
+  errorCb: NetworkListener
+): Promise<NetworkClient> => {
   const clientId = newClientId();
   let listeners: NetworkListener[] = [];
 
   const failed = (step: string) => (err?: any) => {
     // TODO: handle retries/reconnect here
     console.log("A failure happened", step, err);
+    errorCb(err);
   };
 
   const openConn = () =>
@@ -33,11 +37,11 @@ const initClient = async (roomId: RoomId): Promise<NetworkClient> => {
 
       peer.on("error", failed("Peer error"));
 
-      peer.on("open", (id) => {
+      peer.on("open", id => {
         console.log("Peer client: Peer open", id);
         const newConn = peer.connect(`barbu-room-${roomId}`);
 
-        newConn.on("error", (err) => {
+        newConn.on("error", err => {
           reject(err);
           failed("Conn error")(err);
         });
@@ -63,7 +67,7 @@ const initClient = async (roomId: RoomId): Promise<NetworkClient> => {
   let conn = await openConn();
 
   conn.on("data", (event: any) => {
-    listeners.forEach((listener) => {
+    listeners.forEach(listener => {
       listener(event);
     });
   });

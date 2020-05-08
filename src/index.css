@@ -47,13 +47,23 @@ input[type="submit"] {
   border-radius: var(--input-radius);
   color: var(--color-text-light);
   cursor: pointer;
-  margin-top: 0.7rem;
 }
 button:hover,
 input[type="button"]:hover,
 input[type="submit"]:hover {
   filter: brightness(103%);
 }
+
+button[disabled],
+input[type="button"][disabled],
+input[type="submit"][disabled],
+button[disabled]:hover,
+input[type="button"][disabled]:hover,
+input[type="submit"][disabled]:hover {
+  filter: brightness(130%);
+  cursor: not-allowed;
+}
+
 .btn-ghost {
   background-color: var(--color-bg-light);
   border: 1px var(--color-text-dark) solid;

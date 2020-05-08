@@ -43,7 +43,7 @@ type ServerState = {
 };
 
 type Client = {
-  clientId: ClientId;
+  clientId?: ClientId;
   playerId?: PlayerId;
   send: (arg: any) => void;
 };
@@ -70,31 +70,46 @@ const createServer = (roomId = newRoomId()): Server => {
 
   const setName = (clientId: ClientId, name: PlayerId) => {
     const s = store.getState();
+    const doSetName = () => {
+      store.setState({
+        players: s.players.includes(name) ? s.players : s.players.concat(name),
+        clients: produce(s.clients, clients => {
+          clients[clientId].playerId = name;
+        })
+      });
+    };
     if (!name.trim()) {
       sendError(clientId, Evt.NameError, "Nom vide");
       return;
     }
-    if (s.gameStarted) {
-      sendError(
-        clientId,
-        Evt.NameError,
-        "Le jeu a déja commencé, trop tard pour rejoindre"
-      );
+    if (s.gameStarted && s.players.includes(name)) {
       return;
+    }
+    if (s.gameStarted) {
+      const isReconnect = Object.values(s.clients).some(
+        ({ playerId, clientId }) => playerId === name && !clientId
+      );
+      if (isReconnect) {
+        doSetName();
+        return;
+      } else {
+        sendError(
+          clientId,
+          Evt.NameError,
+          "Le jeu a déja commencé, trop tard pour rejoindre"
+        );
+        return;
+      }
     }
     if (s.players.includes(name)) {
       sendError(clientId, Evt.NameError, "Ce nom est pris.");
       return;
     }
-    store.setState({
-      players: s.players.concat(name),
-      clients: produce(s.clients, clients => {
-        clients[clientId].playerId = name;
-      })
-    });
+    doSetName();
   };
 
   const setClient = (client: Client) => {
+    if (!client.clientId) return;
     const state = store.getState();
     const id = client.clientId;
     store.setState({
@@ -106,6 +121,29 @@ const createServer = (roomId = newRoomId()): Server => {
         }
       })
     });
+  };
+
+  const unsetClient = (id: ClientId) => {
+    const { clients, players, gameStarted } = store.getState();
+    const oldClient = clients[id];
+    if (!oldClient || !oldClient.clientId) return;
+    if (gameStarted) {
+      // setup for possible reconnect
+      store.setState({
+        clients: produce(clients, clients => {
+          delete clients[id].clientId;
+        })
+      });
+    } else {
+      // delete player and client
+      store.setState(
+        produce({ players, clients }, newState => {
+          if (oldClient.playerId)
+            newState.players = players.filter(p => p !== oldClient.playerId);
+          delete newState.clients[id];
+        })
+      );
+    }
   };
 
   const play = (clientId: ClientId, cards: Card[]) => {
@@ -227,6 +265,7 @@ const createServer = (roomId = newRoomId()): Server => {
 
     conn.on("error", err => {
       console.log("Peer server: Error on conn", err);
+      unsetClient(conn.peer);
     });
   });
 

@@ -1,6 +1,11 @@
 import { PlayerId, RoomId, Cmd, Evt } from "./common";
 import { Card } from "./deck";
-import { setError, setPlayers, setGameEvent } from "./playerStore";
+import {
+  setConnected,
+  setError,
+  setPlayers,
+  setGameEvent
+} from "./playerStore";
 import initNetworkClient from "./networkClient";
 
 export type Client = {
@@ -14,7 +19,12 @@ export const nullClient: Client = {
 };
 
 const initClient = async (roomId: RoomId) => {
-  const networkClient = await initNetworkClient(roomId);
+  const networkClient = await initNetworkClient(roomId, function onError() {
+    setError("Erreur de connexion. Rafraichir et retenter.");
+    setConnected(false);
+  });
+
+  setConnected(true);
 
   const setName = (name: PlayerId) => {
     networkClient.send({ cmd: Cmd.SetName, name });

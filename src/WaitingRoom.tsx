@@ -8,6 +8,7 @@ import {
   getError,
   getRoomId,
   getPlayers,
+  getConnected,
   getGameStarter
 } from "./playerStore";
 
@@ -19,6 +20,7 @@ const WaitingRoom = () => {
   const roomId = usePlayerStore(getRoomId);
   const players = usePlayerStore(getPlayers);
   const startGame = usePlayerStore(getGameStarter);
+  const isConnected = usePlayerStore(getConnected);
   const [isLoading, setLoading] = useState(false);
   const error = usePlayerStore(getError, function eq(oldErr, newErr) {
     if (isLoading && oldErr !== newErr) setLoading(false);
@@ -106,11 +108,20 @@ const WaitingRoom = () => {
         <form onSubmit={onNameSubmit}>
           {error && <p className="alert-error">{error}</p>}
           <label htmlFor="name">Choisis ton nom:</label>
-          <input id="name" name="name" type="text" />
+          <input
+            className="WaitingRoom__NameInput"
+            id="name"
+            name="name"
+            type="text"
+          />
           <input
             type="submit"
-            value={`Rejoindre${isLoading ? "..." : ""}`}
-            disabled={isLoading}
+            value={
+              isConnected
+                ? `Rejoindre${isLoading ? "..." : ""}`
+                : "Connexion..."
+            }
+            disabled={isLoading || !isConnected}
           />
         </form>
       )}
