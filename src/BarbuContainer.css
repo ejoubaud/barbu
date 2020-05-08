@@ -9,7 +9,7 @@
   margin: auto;
 }
 .BarbuContainer__TableCenter {
-  min-height: 300px;
+  min-height: 200px;
   display: flex;
   flex-flow: row nowrap;
 }
