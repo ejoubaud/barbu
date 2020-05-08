@@ -13,13 +13,17 @@ type OtherPlayerProps = {
   name: PlayerId;
   tricks: Trick[];
   handSize: number;
+  score?: number;
 };
 
-const OtherPlayer = ({ name, tricks, handSize }: OtherPlayerProps) => {
+const OtherPlayer = ({ name, tricks, handSize, score }: OtherPlayerProps) => {
   return (
     <div className="OtherPlayer">
       <div>
-        <h3 className="OtherPlayer__Name">{name}</h3>
+        <h3 className="OtherPlayer__Name">
+          {name}
+          {typeof score !== "undefined" && `: ${score}`}
+        </h3>
       </div>
 
       <div className="OtherPlayer__TricksContainer">

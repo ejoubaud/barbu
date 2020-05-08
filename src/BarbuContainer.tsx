@@ -10,7 +10,8 @@ import {
   getCurrentContract,
   getPlayers,
   getPlayerTricks,
-  getPlayerHandSizes
+  getPlayerHandSizes,
+  getTotalScoreSheet
 } from "./barbuStore";
 import { usePlayerStore, getClient, getError } from "./playerStore";
 
@@ -30,6 +31,8 @@ const BarbuContainer = () => {
   const players = useBarbuStore(getPlayers);
   const playerTricks = useBarbuStore(getPlayerTricks);
   const playerHandSizes = useBarbuStore(getPlayerHandSizes);
+  const totalSheet = useBarbuStore(getTotalScoreSheet);
+
   const client = usePlayerStore(getClient);
   const playCard = (card: Card) => () => client.playCards([card]);
   const error = usePlayerStore(getError);
@@ -52,6 +55,7 @@ const BarbuContainer = () => {
             name={middlePlayer}
             tricks={playerTricks[middlePlayer] || []}
             handSize={playerHandSizes[middlePlayer]}
+            score={totalSheet[middlePlayer]}
           />
         </div>
       )}
@@ -64,6 +68,7 @@ const BarbuContainer = () => {
               name={playerId}
               tricks={playerTricks[playerId] || []}
               handSize={playerHandSizes[playerId]}
+              score={totalSheet[playerId]}
             />
           ))}
         </div>
@@ -79,6 +84,7 @@ const BarbuContainer = () => {
               name={playerId}
               tricks={playerTricks[playerId] || []}
               handSize={playerHandSizes[playerId]}
+              score={totalSheet[playerId]}
             />
           ))}
         </div>
@@ -93,6 +99,8 @@ const BarbuContainer = () => {
         C'est{" "}
         {myName === currentPlayer ? "au con qui demande" : `à ${currentPlayer}`}
         {currentContract && ` - ${currentContract}`}
+        {typeof totalSheet[myName] !== "undefined" &&
+          ` - Score: ${totalSheet[myName]}`}
       </div>
 
       <div className="BarbuContainer__MyHand">

@@ -119,6 +119,16 @@ const addToSheet = (
   score: Score
 ): ScoreSheet => ({ ...sheet, [player]: score + (sheet[player] || 0) });
 
+const addSheets = (sheet1: ScoreSheet, sheet2: ScoreSheet) =>
+  Object.fromEntries(
+    Object.keys(sheet2).map(player => [
+      player,
+      (sheet1[player] || 0) + sheet2[player]
+    ])
+  );
+export const sumSheets = (sheets: ScoreSheet[]) =>
+  sheets.reduce(addSheets, {} as ScoreSheet);
+
 type CardScorer = (checker: CardChecker, score: Score) => TrickScorer;
 const eachCard: CardScorer = (
   checker: CardChecker,
@@ -143,7 +153,7 @@ const BarbuContract: Contract = newContract(
   eachTrick(eachCard(isBarbu, 50))
 );
 const LastTrickContract: Contract = newContract(
-  "Roi de pique",
+  "Dernier Pli",
   lastTrick(() => 50)
 );
 const SaladeContract: Contract = newContract(
@@ -209,6 +219,7 @@ export type PlayerGameState = CommonPlayerGameState & {
   currentPlayer: PlayerId;
   currentContract: ContractName | null | undefined;
   contractScoreSheets: ScoreSheet[];
+  totalScoreSheets: ScoreSheet;
 };
 // needs to be JSONable to send via server
 export const gameStateForPlayer: PlayerStateMapper = (commonState, player) => {
@@ -325,7 +336,7 @@ const ContractEnded = (tricks: Trick[]): ContractEnded => ({
 const processContractEnded: EventProcessor<ContractEnded> = ({ tricks }) =>
   produce(s => {
     const contract = contracts[s.currentContract];
-    const scoreSheet = contract.scorer(tricks)(newSheet());
+    const scoreSheet = contract.scorer(tricks)(newSheet(s.players));
     s.contractScoreSheets.push(scoreSheet);
     s.currentContract += 1;
     s.hands = dealBarbu(s.players);
@@ -339,7 +350,7 @@ interface GameEnded extends BarbuEvent {}
 const GameEnded = (): GameEnded => ({ type: EventType.GameEnded });
 const isGameEnd = ({ currentContract }: GameState) =>
   currentContract >= contracts.length;
-export const isGameOver = (event: CommonGameEvent) =>
+export const isGameOver = (event: CommonGameEvent): event is GameEnded =>
   event.type === EventType.GameEnded;
 
 const trickColor = (t: Trick): Color => t[0].card.color;
@@ -353,6 +364,8 @@ export const canPlay = (
     contractScoreSheets
   }: GameState
 ): [boolean, Err] => {
+  if (contractScoreSheets.length >= contracts.length)
+    return [false, Err.GameOver];
   if (playerId !== players[currentPlayer]) return [false, Err.NotTheirTurn];
   if (cards.length > 1) return [false, Err.IllegalMove];
   const card = cards[0];
@@ -365,8 +378,6 @@ export const canPlay = (
   }
   if (currentTrick.length >= players.length) return [false, Err.TrickOver];
   if (!hasCard(playerHand, card)) return [false, Err.NotInHand];
-  if (contractScoreSheets.length >= contracts.length)
-    return [false, Err.GameOver];
   return [true, Err.None];
 };
 

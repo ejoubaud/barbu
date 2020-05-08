@@ -3,7 +3,7 @@ import createStore from "zustand";
 
 import { notNull } from "./common";
 import { playerStore, getGame } from "./playerStore";
-import { PlayerGameState, BarbuEvent } from "./barbu";
+import { sumSheets, PlayerGameState, BarbuEvent } from "./barbu";
 
 type BarbuStoreState = {
   gameState: PlayerGameState;
@@ -41,3 +41,5 @@ export const getPlayerTricks = ({ gameState }: BarbuStoreState) =>
   gameState.playerTricks;
 export const getPlayerHandSizes = ({ gameState }: BarbuStoreState) =>
   gameState.playerHandSizes;
+export const getTotalScoreSheet = ({ gameState }: BarbuStoreState) =>
+  sumSheets(gameState.contractScoreSheets);
