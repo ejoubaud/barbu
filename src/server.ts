@@ -165,7 +165,6 @@ const createServer = (roomId = newRoomId()): Server => {
     } else if (isGameOver(lastGameEvent)) {
       store.setState({
         gameEnded: true,
-        gameStarted: false,
         lastGameEvent,
         gameState
       });
@@ -212,8 +211,8 @@ const createServer = (roomId = newRoomId()): Server => {
       gameState,
       gameStarted
     }) {
-      if (!gameStarted) return;
       console.log("broadcasting event", lastGameEvent, gameState, clients);
+      if (!gameStarted) return;
       Object.values(clients).forEach(client => {
         if (!client.playerId) return; // TODO: Handle spectator state
         client.send({
