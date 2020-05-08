@@ -42,6 +42,7 @@ type ServerState = {
   playTurn: ActionProcessor;
 };
 
+const nullSend = () => {};
 type Client = {
   clientId?: ClientId;
   playerId?: PlayerId;
@@ -70,6 +71,7 @@ const createServer = (roomId = newRoomId()): Server => {
 
   const setName = (clientId: ClientId, name: PlayerId) => {
     const s = store.getState();
+    console.log("Server: setName", clientId, name, s);
     const doSetName = () => {
       store.setState({
         players: s.players.includes(name) ? s.players : s.players.concat(name),
@@ -80,9 +82,6 @@ const createServer = (roomId = newRoomId()): Server => {
     };
     if (!name.trim()) {
       sendError(clientId, Evt.NameError, "Nom vide");
-      return;
-    }
-    if (s.gameStarted && s.players.includes(name)) {
       return;
     }
     if (s.gameStarted) {
@@ -132,6 +131,7 @@ const createServer = (roomId = newRoomId()): Server => {
       store.setState({
         clients: produce(clients, clients => {
           delete clients[id].clientId;
+          clients[id].send = nullSend;
         })
       });
     } else {
@@ -191,12 +191,13 @@ const createServer = (roomId = newRoomId()): Server => {
 
   store.subscribe(
     notNull(function broadcastNames({ players, clients }) {
-      console.log("broadcasting players ", players);
-      Object.values(clients).forEach(connection => {
-        connection.send({
+      console.log("broadcasting players ", players, clients);
+      Object.values(clients).forEach(client => {
+        if (!client.playerId) return; // TODO: Handle spectator state
+        client.send({
           type: Evt.PlayersUpdated,
           players,
-          playerId: connection.playerId
+          playerId: client.playerId
         });
       });
     }),
@@ -212,7 +213,7 @@ const createServer = (roomId = newRoomId()): Server => {
       gameStarted
     }) {
       if (!gameStarted) return;
-      console.log("broadcasting event", lastGameEvent, gameState);
+      console.log("broadcasting event", lastGameEvent, gameState, clients);
       Object.values(clients).forEach(client => {
         if (!client.playerId) return; // TODO: Handle spectator state
         client.send({
