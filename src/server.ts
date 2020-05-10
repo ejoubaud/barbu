@@ -1,13 +1,12 @@
-import Peer from "peerjs";
 import createStore from "zustand";
 import shallow from "zustand/shallow";
 import produce from "immer";
 
 import { Card } from "./deck";
+
 import {
   PlayerId,
   RoomId,
-  ClientId,
   Cmd,
   Evt,
   ServerGameStarter,
@@ -20,10 +19,13 @@ import {
   Action,
   ActionProcessor
 } from "./common";
+
+import createNetworkServer, { NetworkSender } from "./networkServer";
+
 import startBarbu, { isError, isGameOver, gameStateForPlayer } from "./barbu";
 
-const idCharacters = "abcdefghijklmnopqrstuvwxyz0123456789";
-const newRoomId: () => RoomId = () =>
+const idCharacters = "abcdefghijkmnopqrstuvwxyz123456789";
+export const newRoomId: () => RoomId = () =>
   Array.from(Array(8))
     .map(() =>
       idCharacters.charAt(Math.floor(Math.random() * idCharacters.length))
@@ -34,7 +36,8 @@ type Server = [RoomId, ServerGameStarter];
 
 type ServerState = {
   players: PlayerId[];
-  clients: { [clientId: string]: Client };
+  offline: PlayerId[];
+  clients: { [clientId: string]: NetworkSender };
   gameStarted: boolean;
   gameEnded: boolean;
   gameState: GameState;
@@ -42,16 +45,15 @@ type ServerState = {
   playTurn: ActionProcessor;
 };
 
-const nullSend = () => {};
 type Client = {
-  clientId?: ClientId;
-  playerId?: PlayerId;
+  isConnected: boolean;
   send: (arg: any) => void;
 };
 
-const createServer = (roomId = newRoomId()): Server => {
+const createServer = async (roomId = newRoomId()): Promise<Server> => {
   const [, store] = createStore<ServerState>(set => ({
     players: [],
+    offline: [],
     clients: {},
     gameStarted: false,
     gameEnded: false,
@@ -60,143 +62,31 @@ const createServer = (roomId = newRoomId()): Server => {
     playTurn: nullActionProcessor
   }));
 
-  const send = (clientId: ClientId, msg: any) => {
-    const client = store.getState().clients[clientId];
-    if (!client) {
-      console.log("Tried to send to unknown client", clientId, msg);
-      return;
-    }
-    client.send(msg);
-  };
+  const play = (name: PlayerId, cards: Card[], reply: NetworkSender) => {
+    const { playTurn } = store.getState();
 
-  const setName = (clientId: ClientId, name: PlayerId) => {
-    const s = store.getState();
-    console.log("Server: setName", clientId, name, s);
-    const doSetName = () => {
-      store.setState({
-        players: s.players.includes(name) ? s.players : s.players.concat(name),
-        clients: produce(s.clients, clients => {
-          clients[clientId].playerId = name;
-        })
-      });
-    };
-    if (!name.trim()) {
-      sendError(clientId, Evt.NameError, "Nom vide");
-      return;
-    }
-    if (s.gameStarted) {
-      const isReconnect = Object.values(s.clients).some(
-        ({ playerId, clientId }) => playerId === name && !clientId
-      );
-      if (isReconnect) {
-        doSetName();
-        return;
-      } else {
-        sendError(
-          clientId,
-          Evt.NameError,
-          "Le jeu a déja commencé, trop tard pour rejoindre"
-        );
-        return;
-      }
-    }
-    if (s.players.includes(name)) {
-      sendError(clientId, Evt.NameError, "Ce nom est pris.");
-      return;
-    }
-    doSetName();
-  };
-
-  const setClient = (client: Client) => {
-    if (!client.clientId) return;
-    const state = store.getState();
-    const id = client.clientId;
-    store.setState({
-      clients: produce(state.clients, clients => {
-        const oldClient = clients[id];
-        clients[id] = client;
-        if (oldClient && oldClient.playerId) {
-          clients[id].playerId = oldClient.playerId;
-        }
-      })
-    });
-  };
-
-  const unsetClient = (id: ClientId) => {
-    const { clients, players, gameStarted } = store.getState();
-    const oldClient = clients[id];
-    if (!oldClient || !oldClient.clientId) return;
-    if (gameStarted) {
-      // setup for possible reconnect
-      store.setState({
-        clients: produce(clients, clients => {
-          delete clients[id].clientId;
-          clients[id].send = nullSend;
-        })
-      });
-    } else {
-      // delete player and client
-      store.setState(
-        produce({ players, clients }, newState => {
-          if (oldClient.playerId)
-            newState.players = players.filter(p => p !== oldClient.playerId);
-          delete newState.clients[id];
-        })
-      );
-    }
-  };
-
-  const play = (clientId: ClientId, cards: Card[]) => {
-    const { playTurn, clients } = store.getState();
-    const playerId = clients[clientId].playerId;
-    if (!playerId) {
-      sendError(
-        clientId,
-        Evt.ActionError,
-        "Vous n'êtes pas un joueur de cette partie"
-      );
-      return;
-    }
-    const action = Action(playerId, cards);
+    const action = Action(name, cards);
     const [lastGameEvent, gameState] = playTurn(action);
-    if (isError(lastGameEvent)) {
-      // reply with error
-      sendError(clientId, Evt.ActionError, lastGameEvent.err);
-    } else if (isGameOver(lastGameEvent)) {
-      store.setState({
-        gameEnded: true,
-        lastGameEvent,
-        gameState
-      });
-    } else {
-      // broadcast new event/state
-      store.setState({ lastGameEvent, gameState });
-    }
-  };
 
-  const sendError = (clientId: ClientId, error: Evt, message: string) => {
-    send(clientId, { type: error, message });
-  };
+    if (isError(lastGameEvent))
+      return reply(errorResponse(Evt.ActionError, lastGameEvent.err));
 
-  const startGame: ServerGameStarter = () => {
-    const { players, gameStarted } = store.getState();
-    if (gameStarted) {
-      console.log("Tried to start an already started game");
-      return;
-    }
-    const [playTurn, lastGameEvent, gameState] = startBarbu(players);
-    store.setState({ gameStarted: true, lastGameEvent, gameState, playTurn });
+    const gameEnded = isGameOver(lastGameEvent);
+    store.setState({
+      gameEnded,
+      lastGameEvent,
+      gameState
+    });
   };
 
   store.subscribe(
     notNull(function broadcastNames({ players, clients }) {
       console.log("broadcasting players ", players, clients);
-      Object.values(clients).forEach(client => {
-        if (!client.playerId) return; // TODO: Handle spectator state
-        client.send({
+      Object.entries(clients).forEach(([playerId, send]) => {
+        send({
           type: Evt.PlayersUpdated,
           players,
-          playerId: client.playerId
+          playerId
         });
       });
     }),
@@ -213,12 +103,11 @@ const createServer = (roomId = newRoomId()): Server => {
     }) {
       console.log("broadcasting event", lastGameEvent, gameState, clients);
       if (!gameStarted) return;
-      Object.values(clients).forEach(client => {
-        if (!client.playerId) return; // TODO: Handle spectator state
-        client.send({
+      Object.entries(clients).forEach(([playerId, send]) => {
+        send({
           type: Evt.GameEvent,
           event: lastGameEvent,
-          state: gameStateForPlayer(gameState, client.playerId),
+          state: gameStateForPlayer(gameState, playerId),
           gameStarted
         });
       });
@@ -232,42 +121,88 @@ const createServer = (roomId = newRoomId()): Server => {
     shallow
   );
 
-  const peer = new Peer(`barbu-room-${roomId}`);
-
-  peer.on("open", id => {
-    console.log("Peer server: Peer open", id);
-  });
-
-  peer.on("error", err => {
-    console.log("Peer server: Error on peer", err);
-  });
-
-  peer.on("connection", (conn: Peer.DataConnection) => {
-    console.log("Peer server: Connection on peer", peer);
-
-    conn.on("open", () => {
-      const newClient = {
-        clientId: conn.peer,
-        send: (arg: any) => {
-          conn.send(arg);
-        }
-      };
-      setClient(newClient);
-    });
-
-    conn.on("data", (message: any) => {
-      if (message.cmd === Cmd.SetName) {
-        setName(conn.peer, message.name);
-      } else if (message.cmd === Cmd.Play) {
-        play(conn.peer, message.cards);
+  const validateName = (name: PlayerId): [true] | [false, string] => {
+    if (!name.trim()) return [false, "Nom vide"];
+    const { offline, clients, gameStarted } = store.getState();
+    if (gameStarted) {
+      if (offline.length === 0) return [false, "Le jeu a déja commencé"];
+      if (!offline.includes(name)) {
+        return [false, "Nom exact requis pour reconnexion."];
       }
-    });
+    } else if (clients[name]) {
+      return [false, "Nom déja pris."];
+    }
+    return [true];
+  };
 
-    conn.on("error", err => {
-      console.log("Peer server: Error on conn", err);
-      unsetClient(conn.peer);
+  const errorResponse = (type: Evt, message: string) => ({ type, message });
+
+  const addPlayer = (name: PlayerId, send: NetworkSender) => {
+    const { players, clients, offline } = store.getState();
+    store.setState({
+      players: players.concat(name),
+      clients: { ...clients, [name]: send },
+      offline: offline.filter(p => p !== name)
     });
-  });
+  };
+
+  const flagOffline = (name: PlayerId) => {
+    store.setState(
+      produce(store.getState(), ({ clients, offline }) => {
+        clients[name] = () => {};
+        offline.push(name);
+      })
+    );
+  };
+
+  const deleteClient = (name: PlayerId) => {
+    store.setState(
+      produce(store.getState(), state => {
+        state.players = state.players.filter(p => p !== name);
+        delete state.clients[name];
+      })
+    );
+  };
+
+  await createNetworkServer(
+    roomId,
+    (send, onRequest, onDisconnect) => {
+      let playerId: PlayerId;
+
+      onRequest((message: any) => {
+        if (message.cmd === Cmd.SetName) {
+          if (playerId) return;
+          const { name } = message;
+          const [isValid, err] = validateName(message.name);
+          if (isValid) {
+            playerId = name;
+            addPlayer(name, send);
+          } else {
+            send(errorResponse(Evt.NameError, err as string));
+          }
+        } else if (message.cmd === Cmd.Play) {
+          play(playerId, message.cards, send);
+        }
+      });
+
+      onDisconnect(() => {
+        if (!playerId) return;
+        const { gameStarted } = store.getState();
+        if (gameStarted) return flagOffline(playerId);
+        deleteClient(playerId);
+      });
+    },
+    err => {}
+  );
+
+  const startGame: ServerGameStarter = () => {
+    const { players, gameStarted } = store.getState();
+    if (gameStarted)
+      return console.log("Tried to start an already started game");
+
+    const [playTurn, lastGameEvent, gameState] = startBarbu(players);
+    store.setState({ gameStarted: true, lastGameEvent, gameState, playTurn });
+  };
 
   return [roomId, startGame];
 };

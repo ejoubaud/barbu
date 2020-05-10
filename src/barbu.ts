@@ -179,6 +179,7 @@ const contracts = [
 ];
 
 enum Err {
+  UnknownPlayer = "Joueur inconnu",
   NotTheirTurn = "Pas ton tour",
   IllegalMove = "Interdit",
   IllegalColor = "Couleur interdite",
@@ -366,6 +367,7 @@ export const canPlay = (
 ): [boolean, Err] => {
   if (contractScoreSheets.length >= contracts.length)
     return [false, Err.GameOver];
+  if (!players.includes(playerId)) return [false, Err.UnknownPlayer];
   if (playerId !== players[currentPlayer]) return [false, Err.NotTheirTurn];
   if (cards.length > 1) return [false, Err.IllegalMove];
   const card = cards[0];

@@ -8,30 +8,35 @@ import * as serviceWorker from "./serviceWorker";
 
 import createServer from "./server";
 import initClient from "./client";
-import { RoomId, ServerGameStarter } from "./common";
+import { RoomId } from "./common";
 import { setClient, setError, setGameStarter } from "./playerStore";
 
 import { enableMapSet } from "immer";
 enableMapSet();
 
+const startClient = (roomId: RoomId) => {
+  initClient(roomId).then(
+    client => setClient(roomId, client),
+    err => {
+      console.log("Client init error:", err);
+      setError(
+        "Erreur de connexion. Vérifier l'URL et rafraichir pour réessayer"
+      );
+    }
+  );
+};
+
 let roomId: RoomId;
 const guestUrl = window.location.pathname.match("/join/(.*)$");
 if (guestUrl) {
   roomId = guestUrl[1];
+  startClient(roomId);
 } else {
-  let startGame: ServerGameStarter;
-  [roomId, startGame] = createServer();
-  setGameStarter(startGame);
+  createServer().then(([roomId, startGame]) => {
+    startClient(roomId);
+    setGameStarter(startGame);
+  });
 }
-initClient(roomId).then(
-  client => setClient(roomId, client),
-  err => {
-    console.log("Client init error:", err);
-    setError(
-      "Erreur de connexion. Vérifier l'URL et rafraichir pour réessayer"
-    );
-  }
-);
 
 ReactDOM.render(
   <React.StrictMode>
