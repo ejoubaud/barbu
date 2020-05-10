@@ -24,10 +24,13 @@ const initClient = async (
 ): Promise<NetworkClient> => {
   const clientId = newClientId();
   let listeners: NetworkListener[] = [];
+  let stopped = false;
 
-  const failed = (step: string) => (err?: any) => {
+  const failed = (step: string, peer: Peer) => (err?: any) => {
     // TODO: handle retries/reconnect here
     console.log("A failure happened", step, err);
+    stopped = true;
+    peer.destroy();
     errorCb(err);
   };
 
@@ -35,21 +38,26 @@ const initClient = async (
     new Promise<Peer.DataConnection>((resolve, reject) => {
       const peer = new Peer(`barbu-player-${clientId}`);
 
-      peer.on("error", failed("Peer error"));
+      peer.on("error", err => {
+        reject(err);
+        failed("Peer error", peer)(err);
+      });
 
       peer.on("open", id => {
         console.log("Peer client: Peer open", id);
         const newConn = peer.connect(`barbu-room-${roomId}`);
 
         newConn.on("error", err => {
+          // just in case it hasn't resolved yet
           reject(err);
-          failed("Conn error")(err);
+          failed("Conn error", peer)(err);
         });
 
-        newConn.on("close", failed("Client Conn closed"));
+        newConn.on("close", failed("Client Conn closed", peer));
 
         newConn.on("open", () => {
           console.log("Peer client: Conn open");
+          stopped = false;
           resolve(newConn);
         });
       });
@@ -57,7 +65,11 @@ const initClient = async (
 
   // making it async so it can handle reconnect in the future
   const send = async (data: any) => {
-    conn.send(data);
+    if (stopped) {
+      errorCb(new Error("Tried to send on a stopped client"));
+    } else {
+      conn.send(data);
+    }
   };
 
   const listen = (listener: NetworkListener) => {

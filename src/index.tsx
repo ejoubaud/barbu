@@ -9,7 +9,7 @@ import * as serviceWorker from "./serviceWorker";
 import createServer from "./server";
 import initClient from "./client";
 import { RoomId, ServerGameStarter } from "./common";
-import { setClient, setGameStarter } from "./playerStore";
+import { setClient, setError, setGameStarter } from "./playerStore";
 
 import { enableMapSet } from "immer";
 enableMapSet();
@@ -23,9 +23,15 @@ if (guestUrl) {
   [roomId, startGame] = createServer();
   setGameStarter(startGame);
 }
-initClient(roomId).then(client => {
-  setClient(roomId, client);
-});
+initClient(roomId).then(
+  client => setClient(roomId, client),
+  err => {
+    console.log("Client init error:", err);
+    setError(
+      "Erreur de connexion. Vérifier l'URL et rafraichir pour réessayer"
+    );
+  }
+);
 
 ReactDOM.render(
   <React.StrictMode>
