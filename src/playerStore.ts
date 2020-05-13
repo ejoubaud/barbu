@@ -2,13 +2,14 @@
 import createStore from "zustand";
 
 import {
+  nullPlayerGameState,
+  nullGameEvent,
   PlayerId,
   RoomId,
   ServerGameStarter,
   GameEvent,
   PlayerGameState,
-  nullPlayerGameState,
-  nullGameEvent
+  SavedGame
 } from "./common";
 import { Client, nullClient } from "./client";
 
@@ -23,6 +24,7 @@ export type PlayerStoreState = {
   connected: boolean;
   gameState: PlayerGameState;
   lastGameEvent: GameEvent;
+  savedGame?: SavedGame;
 };
 
 export const [usePlayerStore, playerStore] = createStore<PlayerStoreState>(
@@ -49,6 +51,11 @@ export const getRoomId = ({ roomId }: PlayerStoreState) => roomId;
 export const setGameStarter = (startGame: ServerGameStarter) =>
   playerStore.setState({ startGame });
 export const getGameStarter = ({ startGame }: PlayerStoreState) => startGame;
+export const setSavedGame = (savedGame: SavedGame) =>
+  playerStore.setState({ savedGame });
+export const getSavedGame = ({ savedGame }: PlayerStoreState) => savedGame;
+export const removeSavedGame = () =>
+  playerStore.setState({ savedGame: undefined });
 
 export const getMyName = ({ myName }: PlayerStoreState): PlayerId => myName;
 
@@ -56,7 +63,7 @@ export const setError = (error: string) => playerStore.setState({ error });
 export const getError = ({ error }: PlayerStoreState) => error;
 
 export const setPlayers = (myName: PlayerId, players: PlayerId[]) =>
-  playerStore.setState({ myName, players });
+  playerStore.setState({ myName, players, error: "" });
 export const getPlayers = ({ players }: PlayerStoreState) => players;
 
 export const setGameEvent = (

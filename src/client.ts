@@ -37,7 +37,6 @@ const initClient = async (roomId: RoomId) => {
   networkClient.listen(event => {
     switch (event.type) {
       case Evt.NameError:
-        // TODO: Handle in UI
         setError(event.message);
         break;
       case Evt.PlayersUpdated:

@@ -1,4 +1,4 @@
-import React, { useRef, useState, FormEvent } from "react";
+import React, { useState, useRef, FormEvent } from "react";
 
 import "./WaitingRoom.css";
 import {
@@ -9,7 +9,9 @@ import {
   getRoomId,
   getPlayers,
   getConnected,
-  getGameStarter
+  getGameStarter,
+  getSavedGame,
+  removeSavedGame
 } from "./playerStore";
 
 export type NameSubmitter = (evt: FormEvent<HTMLFormElement>) => void;
@@ -20,7 +22,10 @@ const WaitingRoom = () => {
   const roomId = usePlayerStore(getRoomId);
   const players = usePlayerStore(getPlayers);
   const startGame = usePlayerStore(getGameStarter);
+  const savedGame = usePlayerStore(getSavedGame);
   const isConnected = usePlayerStore(getConnected);
+
+  const [isLoadingGame, setLoadingGame] = useState(false);
   const [isLoading, setLoading] = useState(false);
   const error = usePlayerStore(getError, function eq(oldErr, newErr) {
     if (isLoading && oldErr !== newErr) setLoading(false);
@@ -59,7 +64,25 @@ const WaitingRoom = () => {
 
   return (
     <div className="WaitingRoom">
-      {myName ? (
+      {error && <p className="alert-error">{error}</p>}
+      {savedGame && !isLoadingGame ? (
+        <>
+          <div className="WaitingRoom__Button">
+            <input
+              type="button"
+              value={`Load game${startGame ? "" : "..."}`}
+              onClick={() => {
+                startGame && startGame(savedGame);
+                setLoadingGame(true);
+              }}
+              disabled={!startGame}
+            />
+          </div>
+          <div>
+            <input type="button" value="New Game" onClick={removeSavedGame} />
+          </div>
+        </>
+      ) : myName ? (
         <>
           <div>
             <p>En attente des autres joueurs...</p>
@@ -106,7 +129,6 @@ const WaitingRoom = () => {
         </>
       ) : (
         <form onSubmit={onNameSubmit}>
-          {error && <p className="alert-error">{error}</p>}
           <label htmlFor="name">Choisis ton nom:</label>
           <input
             className="WaitingRoom__NameInput"

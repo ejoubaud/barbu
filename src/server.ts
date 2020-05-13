@@ -17,7 +17,9 @@ import {
   GameEvent,
   GameState,
   Action,
-  ActionProcessor
+  ActionProcessor,
+  ActionResult,
+  SavedGame
 } from "./common";
 
 import createNetworkServer, { NetworkSender } from "./networkServer";
@@ -50,6 +52,13 @@ type Client = {
   send: (arg: any) => void;
 };
 
+export const savedGame = () => {
+  if (!window.localStorage) return;
+  const savedJson = window.localStorage.getItem("savedGame");
+  if (!savedJson) return;
+  return JSON.parse(savedJson) as SavedGame;
+};
+
 const createServer = async (roomId = newRoomId()): Promise<Server> => {
   const [, store] = createStore<ServerState>(set => ({
     players: [],
@@ -62,11 +71,21 @@ const createServer = async (roomId = newRoomId()): Promise<Server> => {
     playTurn: nullActionProcessor
   }));
 
+  const saveGame = ([lastEvent, gameState]: ActionResult) => {
+    if (!window.localStorage) return;
+    const { players } = store.getState();
+    window.localStorage.setItem(
+      "savedGame",
+      JSON.stringify({ roomId, lastEvent, gameState, players } as SavedGame)
+    );
+  };
+
   const play = (name: PlayerId, cards: Card[], reply: NetworkSender) => {
     const { playTurn } = store.getState();
 
     const action = Action(name, cards);
     const [lastGameEvent, gameState] = playTurn(action);
+    saveGame([lastGameEvent, gameState]);
 
     if (isError(lastGameEvent))
       return reply(errorResponse(Evt.ActionError, lastGameEvent.err));
@@ -140,7 +159,7 @@ const createServer = async (roomId = newRoomId()): Promise<Server> => {
   const addPlayer = (name: PlayerId, send: NetworkSender) => {
     const { players, clients, offline } = store.getState();
     store.setState({
-      players: players.concat(name),
+      players: players.includes(name) ? players : players.concat(name),
       clients: { ...clients, [name]: send },
       offline: offline.filter(p => p !== name)
     });
@@ -192,16 +211,34 @@ const createServer = async (roomId = newRoomId()): Promise<Server> => {
         deleteClient(playerId);
       });
     },
+    // TODO: Handle this
     err => {}
   );
 
-  const startGame: ServerGameStarter = () => {
-    const { players, gameStarted } = store.getState();
+  const startGame: ServerGameStarter = savedGame => {
+    const { gameStarted } = store.getState();
     if (gameStarted)
       return console.log("Tried to start an already started game");
 
-    const [playTurn, lastGameEvent, gameState] = startBarbu(players);
-    store.setState({ gameStarted: true, lastGameEvent, gameState, playTurn });
+    if (savedGame) {
+      // loading previous game
+      const { players, lastEvent, gameState } = savedGame;
+      store.setState({ players, offline: players });
+      const [playTurn, lastGameEvent, newState] = startBarbu(players, [
+        lastEvent,
+        gameState
+      ]);
+      store.setState({
+        gameStarted: true,
+        lastGameEvent,
+        gameState: newState,
+        playTurn
+      });
+    } else {
+      const { players } = store.getState();
+      const [playTurn, lastGameEvent, gameState] = startBarbu(players);
+      store.setState({ gameStarted: true, lastGameEvent, gameState, playTurn });
+    }
   };
 
   return [roomId, startGame];

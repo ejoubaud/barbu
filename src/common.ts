@@ -25,7 +25,13 @@ export interface ServerEvent {
   type: Evt;
 }
 
-export type ServerGameStarter = () => void;
+export type SavedGame = {
+  roomId: RoomId;
+  lastEvent: GameEvent;
+  gameState: GameState;
+  players: PlayerId[];
+};
+export type ServerGameStarter = (savedGame?: SavedGame) => void;
 
 export const notNull = <U>(listener: (state: U) => void): StateListener<U> => (
   state,
@@ -54,7 +60,10 @@ export const Action = (playerId: PlayerId, cards: Card[]): Action => ({
 export type ActionResult = [GameEvent, GameState];
 export type ActionProcessor = (action: Action) => ActionResult;
 
-export type GameStarter = (players: PlayerId[]) => StartResult;
+export type GameStarter = (
+  players: PlayerId[],
+  initialActionResult?: ActionResult
+) => StartResult;
 export type StartResult = [ActionProcessor, GameEvent, GameState];
 
 export type PlayerStateMapper = (

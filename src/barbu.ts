@@ -383,13 +383,20 @@ export const canPlay = (
   return [true, Err.None];
 };
 
-export const start: GameStarter = players => {
+export const startAction = (players: PlayerId[]): ActionResult => {
   const gameStartedEvent: GameStarted = GameStarted(players);
   const initialState: GameState = processGameStarted(gameStartedEvent)(
     newGameState()
   );
+  return [gameStartedEvent, initialState];
+};
 
-  let state: GameState = initialState;
+export const start: GameStarter = (
+  players,
+  initialActionResult = startAction(players)
+) => {
+  const [initialEvent, initialState] = initialActionResult;
+  let state = initialState as GameState;
 
   const play: ActionProcessor = action => {
     const [event, newState] = ((oldState): ActionResult => {
@@ -416,7 +423,7 @@ export const start: GameStarter = players => {
     return [event, newState];
   };
 
-  return [play, gameStartedEvent, state];
+  return [play, initialEvent, initialState];
 };
 
 export default start;
