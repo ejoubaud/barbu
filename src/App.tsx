@@ -12,7 +12,8 @@ import {
   setClient,
   setError,
   setGameStarter,
-  setSavedGame
+  setSavedGame,
+  removeSavedGame
 } from "./playerStore";
 import { usePlayerStore, getGameStarted } from "./playerStore";
 
@@ -35,10 +36,21 @@ const joinRoom = async () => {
     startClient(roomId);
   } else {
     const oldGame = savedGame();
-    if (oldGame) setSavedGame(oldGame);
-    const [roomId, startGame] = await createServer(oldGame && oldGame.roomId);
-    startClient(roomId);
-    setGameStarter(startGame);
+    if (oldGame) {
+      setSavedGame(oldGame);
+      setGameStarter(async savedGame => {
+        removeSavedGame();
+        const [roomId, startGame] = await createServer(
+          savedGame && savedGame.roomId
+        );
+        if (savedGame) startGame(savedGame);
+        startClient(roomId);
+      });
+    } else {
+      const [roomId, startGame] = await createServer();
+      setGameStarter(startGame);
+      startClient(roomId);
+    }
   }
 };
 

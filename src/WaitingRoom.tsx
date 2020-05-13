@@ -10,8 +10,7 @@ import {
   getPlayers,
   getConnected,
   getGameStarter,
-  getSavedGame,
-  removeSavedGame
+  getSavedGame
 } from "./playerStore";
 
 export type NameSubmitter = (evt: FormEvent<HTMLFormElement>) => void;
@@ -25,7 +24,6 @@ const WaitingRoom = () => {
   const savedGame = usePlayerStore(getSavedGame);
   const isConnected = usePlayerStore(getConnected);
 
-  const [isLoadingGame, setLoadingGame] = useState(false);
   const [isLoading, setLoading] = useState(false);
   const error = usePlayerStore(getError, function eq(oldErr, newErr) {
     if (isLoading && oldErr !== newErr) setLoading(false);
@@ -65,21 +63,25 @@ const WaitingRoom = () => {
   return (
     <div className="WaitingRoom">
       {error && <p className="alert-error">{error}</p>}
-      {savedGame && !isLoadingGame ? (
+      {startGame && savedGame ? (
         <>
           <div className="WaitingRoom__Button">
             <input
               type="button"
-              value={`Load game${startGame ? "" : "..."}`}
+              value="Reprendre partie"
               onClick={() => {
-                startGame && startGame(savedGame);
-                setLoadingGame(true);
+                startGame(savedGame);
               }}
-              disabled={!startGame}
             />
           </div>
           <div>
-            <input type="button" value="New Game" onClick={removeSavedGame} />
+            <input
+              type="button"
+              value="Nouvelle partie"
+              onClick={() => {
+                startGame();
+              }}
+            />
           </div>
         </>
       ) : myName ? (
