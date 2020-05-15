@@ -150,7 +150,6 @@ const createServer: ServerStarter = async (roomId = newRoomId()) => {
   const validateName = (name: PlayerId): [true] | [false, string] => {
     if (!name.trim()) return [false, "Nom vide"];
     const { offline, clients, gameStarted } = store.getState();
-    console.log("POIL", offline, clients, name);
     if (gameStarted) {
       if (offline.length === 0) return [false, "Le jeu a déja commencé"];
       if (!offline.includes(name)) {
