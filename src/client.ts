@@ -26,8 +26,24 @@ const initClient = async (roomId: RoomId) => {
 
   setConnected(true);
 
+  const clearMyName = () => {
+    if (!window.sessionStorage) return;
+    window.sessionStorage.removeItem(`myName-${roomId}`);
+  };
+
+  const saveMyName = (myName: PlayerId) => {
+    if (!window.sessionStorage) return;
+    window.sessionStorage.setItem(`myName-${roomId}`, myName);
+  };
+
+  const savedName = (): PlayerId | null => {
+    if (!window.sessionStorage) return null;
+    return window.sessionStorage.getItem(`myName-${roomId}`);
+  };
+
   const setName = (name: PlayerId) => {
     networkClient.send({ cmd: Cmd.SetName, name });
+    saveMyName(name);
   };
 
   const playCards = (cards: Card[]) => {
@@ -38,6 +54,7 @@ const initClient = async (roomId: RoomId) => {
     switch (event.type) {
       case Evt.NameError:
         setError(event.message);
+        clearMyName();
         break;
       case Evt.PlayersUpdated:
         setPlayers(event.playerId, event.players);
@@ -51,7 +68,7 @@ const initClient = async (roomId: RoomId) => {
     }
   });
 
-  return { setName, playCards };
+  return { setName, savedName, playCards };
 };
 
 export default initClient;

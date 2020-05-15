@@ -9,7 +9,6 @@ import {
   RoomId,
   Cmd,
   Evt,
-  ServerGameStarter,
   notNull,
   nullGameEvent,
   nullGameState,
@@ -18,8 +17,7 @@ import {
   GameState,
   Action,
   ActionProcessor,
-  ActionResult,
-  SavedGame
+  ActionResult
 } from "./common";
 
 import createNetworkServer, { NetworkSender } from "./networkServer";
@@ -52,6 +50,13 @@ type Client = {
   send: (arg: any) => void;
 };
 
+type SavedGame = {
+  roomId: RoomId;
+  lastEvent: GameEvent;
+  gameState: GameState;
+  players: PlayerId[];
+};
+
 export const savedGame = () => {
   if (!window.localStorage) return;
   const savedJson = window.localStorage.getItem("savedGame");
@@ -59,7 +64,9 @@ export const savedGame = () => {
   return JSON.parse(savedJson) as SavedGame;
 };
 
-const createServer = async (roomId = newRoomId()): Promise<Server> => {
+export type ServerGameStarter = (savedGame?: SavedGame) => void;
+export type ServerStarter = (roomId?: RoomId) => Promise<Server>;
+const createServer: ServerStarter = async (roomId = newRoomId()) => {
   const [, store] = createStore<ServerState>(set => ({
     players: [],
     offline: [],
@@ -143,6 +150,7 @@ const createServer = async (roomId = newRoomId()): Promise<Server> => {
   const validateName = (name: PlayerId): [true] | [false, string] => {
     if (!name.trim()) return [false, "Nom vide"];
     const { offline, clients, gameStarted } = store.getState();
+    console.log("POIL", offline, clients, name);
     if (gameStarted) {
       if (offline.length === 0) return [false, "Le jeu a déja commencé"];
       if (!offline.includes(name)) {

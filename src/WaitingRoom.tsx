@@ -1,4 +1,4 @@
-import React, { useState, useRef, FormEvent } from "react";
+import React, { useEffect, useState, useRef, FormEvent } from "react";
 
 import "./WaitingRoom.css";
 import {
@@ -9,26 +9,73 @@ import {
   getRoomId,
   getPlayers,
   getConnected,
-  getGameStarter,
-  getSavedGame
+  setClient,
+  setError
 } from "./playerStore";
 
-export type NameSubmitter = (evt: FormEvent<HTMLFormElement>) => void;
+import { RoomId } from "./common";
+import createServer, { savedGame, ServerGameStarter } from "./server";
+import initClient from "./client";
+
+const startClient = async (roomId: RoomId) => {
+  try {
+    const client = await initClient(roomId);
+    setClient(roomId, client);
+    const savedName = client.savedName();
+    if (savedName) client.setName(savedName);
+  } catch (err) {
+    console.log("Client init error:", err);
+    setError(
+      "Erreur de connexion. Vérifier l'URL et rafraichir pour réessayer"
+    );
+  }
+};
+
+const extractRoomIdFromUrl = (): RoomId | null => {
+  const match = window.location.pathname.match("/join/(.*)$");
+  return match && match[1];
+};
+
+const urlRoomId = extractRoomIdFromUrl();
+const isHost = !urlRoomId;
+const oldGame = savedGame();
 
 const WaitingRoom = () => {
-  const myName = usePlayerStore(getMyName);
-  const client = usePlayerStore(getClient);
-  const roomId = usePlayerStore(getRoomId);
-  const players = usePlayerStore(getPlayers);
-  const startGame = usePlayerStore(getGameStarter);
-  const savedGame = usePlayerStore(getSavedGame);
-  const isConnected = usePlayerStore(getConnected);
+  const [startGame, setGameStarter] = useState<ServerGameStarter | null>(null);
+  const [isResumingOldGame, setResumingOldGame] = useState(false);
+  const [isStartingNewGame, setStartingNewName] = useState(false);
+
+  const startNewGame = async () => {
+    setStartingNewName(true);
+    const [roomId, startGame] = await createServer();
+    startClient(roomId);
+    setGameStarter(() => startGame);
+  };
+
+  const resumeOldGame = async () => {
+    if (!oldGame) throw new Error("Trying to resume a null game");
+    setResumingOldGame(true);
+    const [roomId, startGame] = await createServer(oldGame.roomId);
+    startClient(roomId);
+    startGame(oldGame);
+  };
 
   const [isLoading, setLoading] = useState(false);
   const error = usePlayerStore(getError, function eq(oldErr, newErr) {
     if (isLoading && oldErr !== newErr) setLoading(false);
     return oldErr === newErr;
   });
+
+  useEffect(() => {
+    if (urlRoomId) startClient(urlRoomId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [urlRoomId]);
+
+  const myName = usePlayerStore(getMyName);
+  const client = usePlayerStore(getClient);
+  const roomId = usePlayerStore(getRoomId);
+  const players = usePlayerStore(getPlayers);
+  const isConnected = usePlayerStore(getConnected);
 
   const url = `${window.location.host}/join/${roomId}`;
   const urlRef = useRef<HTMLPreElement>(null);
@@ -63,24 +110,22 @@ const WaitingRoom = () => {
   return (
     <div className="WaitingRoom">
       {error && <p className="alert-error">{error}</p>}
-      {startGame && savedGame ? (
+      {isHost && oldGame && !isConnected && !isStartingNewGame ? (
         <>
           <div className="WaitingRoom__Button">
             <input
               type="button"
-              value="Reprendre partie"
-              onClick={() => {
-                startGame(savedGame);
-              }}
+              value={`Reprendre partie${isResumingOldGame ? "..." : ""}`}
+              onClick={resumeOldGame}
+              disabled={isResumingOldGame}
             />
           </div>
           <div>
             <input
               type="button"
               value="Nouvelle partie"
-              onClick={() => {
-                startGame();
-              }}
+              onClick={startNewGame}
+              disabled={isResumingOldGame}
             />
           </div>
         </>
@@ -118,13 +163,7 @@ const WaitingRoom = () => {
             </ul>
           </div>
           {startGame ? (
-            <button
-              onClick={evt => {
-                startGame();
-              }}
-            >
-              Lancer le jeu
-            </button>
+            <button onClick={() => startGame()}>Lancer le jeu</button>
           ) : (
             <p>La partie commencera au signal de l'hôte.</p>
           )}
