@@ -67,7 +67,12 @@ const WaitingRoom = () => {
   });
 
   useEffect(() => {
-    if (urlRoomId) startClient(urlRoomId);
+    if (urlRoomId) {
+      startClient(urlRoomId);
+    } else if (!oldGame) {
+      // if no saved game: no load/new screen, so start server immediately
+      startNewGame();
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [urlRoomId]);
 
