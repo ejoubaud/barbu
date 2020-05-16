@@ -21,8 +21,12 @@ const startClient = async (roomId: RoomId) => {
   try {
     const client = await initClient(roomId);
     setClient(roomId, client);
-    const savedName = client.savedName();
-    if (savedName) client.setName(savedName);
+    // try reconnect if relevant
+    const previousSeat = client.savedSeat();
+    if (previousSeat) {
+      const { savedName, clientId } = previousSeat;
+      client.setName(savedName, clientId);
+    }
   } catch (err) {
     console.log("Client init error:", err);
     setError(

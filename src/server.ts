@@ -7,6 +7,7 @@ import { Card } from "./deck";
 import {
   PlayerId,
   RoomId,
+  ClientId,
   Cmd,
   Evt,
   notNull,
@@ -33,21 +34,20 @@ export const newRoomId: () => RoomId = () =>
     .join("");
 
 type Server = [RoomId, ServerGameStarter];
+type Client = {
+  clientId: ClientId;
+  send: NetworkSender;
+};
 
 type ServerState = {
   players: PlayerId[];
   offline: PlayerId[];
-  clients: { [clientId: string]: NetworkSender };
+  clients: { [playerId: string]: Client };
   gameStarted: boolean;
   gameEnded: boolean;
   gameState: GameState;
   lastGameEvent: GameEvent;
   playTurn: ActionProcessor;
-};
-
-type Client = {
-  isConnected: boolean;
-  send: (arg: any) => void;
 };
 
 type SavedGame = {
@@ -108,7 +108,7 @@ const createServer: ServerStarter = async (roomId = newRoomId()) => {
   store.subscribe(
     notNull(function broadcastNames({ players, clients }) {
       console.log("broadcasting players ", players, clients);
-      Object.entries(clients).forEach(([playerId, send]) => {
+      Object.entries(clients).forEach(([playerId, { send }]) => {
         send({
           type: Evt.PlayersUpdated,
           players,
@@ -129,7 +129,7 @@ const createServer: ServerStarter = async (roomId = newRoomId()) => {
     }) {
       console.log("broadcasting event", lastGameEvent, gameState, clients);
       if (!gameStarted) return;
-      Object.entries(clients).forEach(([playerId, send]) => {
+      Object.entries(clients).forEach(([playerId, { send }]) => {
         send({
           type: Evt.GameEvent,
           event: lastGameEvent,
@@ -147,13 +147,30 @@ const createServer: ServerStarter = async (roomId = newRoomId()) => {
     shallow
   );
 
-  const validateName = (name: PlayerId): [true] | [false, string] => {
+  const validateName = (
+    name: PlayerId,
+    previousClientId: ClientId
+  ): [true] | [false, string] => {
     if (!name.trim()) return [false, "Nom vide"];
-    const { offline, clients, gameStarted } = store.getState();
+    const { players, offline, clients, gameStarted } = store.getState();
     if (gameStarted) {
-      if (offline.length === 0) return [false, "Le jeu a déja commencé"];
-      if (!offline.includes(name)) {
-        return [false, "Nom exact requis pour reconnexion."];
+      if (players.includes(name)) {
+        if (clients[name] && previousClientId === clients[name].clientId) {
+          // force-reconnect with new clientId if they know the old one,
+          // even if we didn't notice they had disconnected
+          return [true];
+        } else if (!offline.includes(name)) {
+          return [false, `${name} est encore connecté(e)`];
+        }
+      } else if (offline.length > 0) {
+        // it might be a player trying to reconnect with the wrong name
+        return [
+          false,
+          "Le jeu a déja commencé. Nom exact requis pour reconnexion."
+        ];
+      } else {
+        // it's probably a player who's late to the game
+        return [false, "Le jeu a déja commencé"];
       }
     } else if (clients[name]) {
       return [false, "Nom déja pris."];
@@ -163,11 +180,15 @@ const createServer: ServerStarter = async (roomId = newRoomId()) => {
 
   const errorResponse = (type: Evt, message: string) => ({ type, message });
 
-  const addPlayer = (name: PlayerId, send: NetworkSender) => {
+  const addPlayer = (
+    name: PlayerId,
+    clientId: ClientId,
+    send: NetworkSender
+  ) => {
     const { players, clients, offline } = store.getState();
     store.setState({
       players: players.includes(name) ? players : players.concat(name),
-      clients: { ...clients, [name]: send },
+      clients: { ...clients, [name]: { clientId, send } },
       offline: offline.filter(p => p !== name)
     });
   };
@@ -175,7 +196,7 @@ const createServer: ServerStarter = async (roomId = newRoomId()) => {
   const flagOffline = (name: PlayerId) => {
     store.setState(
       produce(store.getState(), ({ clients, offline }) => {
-        clients[name] = () => {};
+        clients[name].send = () => {};
         offline.push(name);
       })
     );
@@ -192,17 +213,17 @@ const createServer: ServerStarter = async (roomId = newRoomId()) => {
 
   await createNetworkServer(
     roomId,
-    (send, onRequest, onDisconnect) => {
+    (clientId, send, onRequest, onDisconnect) => {
       let playerId: PlayerId;
 
       onRequest((message: any) => {
         if (message.cmd === Cmd.SetName) {
           if (playerId) return;
-          const { name } = message;
-          const [isValid, err] = validateName(message.name);
+          const { name, previousClientId } = message;
+          const [isValid, err] = validateName(message.name, previousClientId);
           if (isValid) {
             playerId = name;
-            addPlayer(name, send);
+            addPlayer(name, clientId, send);
           } else {
             send(errorResponse(Evt.NameError, err as string));
           }

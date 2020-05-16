@@ -1,4 +1,4 @@
-import { PlayerId, RoomId, Cmd, Evt } from "./common";
+import { PlayerId, RoomId, ClientId, Cmd, Evt } from "./common";
 import { Card } from "./deck";
 import {
   setConnected,
@@ -7,6 +7,11 @@ import {
   setGameEvent
 } from "./playerStore";
 import initNetworkClient from "./networkClient";
+
+export type SavedSeat = {
+  savedName: string;
+  clientId: ClientId;
+};
 
 export type Client = {
   setName: (name: PlayerId) => void;
@@ -26,24 +31,30 @@ const initClient = async (roomId: RoomId) => {
 
   setConnected(true);
 
-  const clearMyName = () => {
+  const clearMySeat = () => {
     if (!window.sessionStorage) return;
-    window.sessionStorage.removeItem(`myName-${roomId}`);
+    window.sessionStorage.clear();
   };
 
-  const saveMyName = (myName: PlayerId) => {
+  const saveMySeat = (myName: PlayerId) => {
     if (!window.sessionStorage) return;
-    window.sessionStorage.setItem(`myName-${roomId}`, myName);
+    const savedSeat = JSON.stringify({
+      savedName: myName,
+      clientId: networkClient.clientId
+    });
+    window.sessionStorage.setItem(`myName-${roomId}`, savedSeat);
   };
 
-  const savedName = (): PlayerId | null => {
+  const savedSeat = (): SavedSeat | null => {
     if (!window.sessionStorage) return null;
-    return window.sessionStorage.getItem(`myName-${roomId}`);
+    const json = window.sessionStorage.getItem(`myName-${roomId}`);
+    if (!json) return null;
+    return JSON.parse(json);
   };
 
-  const setName = (name: PlayerId) => {
-    networkClient.send({ cmd: Cmd.SetName, name });
-    saveMyName(name);
+  const setName = (name: PlayerId, previousClientId?: ClientId) => {
+    networkClient.send({ cmd: Cmd.SetName, name, previousClientId });
+    saveMySeat(name);
   };
 
   const playCards = (cards: Card[]) => {
@@ -54,7 +65,7 @@ const initClient = async (roomId: RoomId) => {
     switch (event.type) {
       case Evt.NameError:
         setError(event.message);
-        clearMyName();
+        clearMySeat();
         break;
       case Evt.PlayersUpdated:
         setPlayers(event.playerId, event.players);
@@ -68,7 +79,7 @@ const initClient = async (roomId: RoomId) => {
     }
   });
 
-  return { setName, savedName, playCards };
+  return { setName, savedSeat, playCards };
 };
 
 export default initClient;

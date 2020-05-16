@@ -14,6 +14,7 @@ const newClientId = (): ClientId =>
 
 export type NetworkListener = (data: any) => void;
 export type NetworkClient = {
+  clientId: ClientId;
   send: (data: any) => Promise<void>;
   listen: (listener: NetworkListener) => void;
 };
@@ -45,7 +46,9 @@ const initClient = async (
 
       peer.on("open", id => {
         console.log("Peer client: Peer open", id);
-        const newConn = peer.connect(`barbu-room-${roomId}`);
+        const newConn = peer.connect(`barbu-room-${roomId}`, {
+          metadata: { clientId }
+        });
 
         newConn.on("error", err => {
           // just in case it hasn't resolved yet
@@ -84,7 +87,7 @@ const initClient = async (
     });
   });
 
-  return { send, listen };
+  return { clientId, send, listen };
 };
 
 export default initClient;

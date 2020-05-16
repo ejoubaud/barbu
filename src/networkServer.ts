@@ -1,10 +1,11 @@
 import Peer from "peerjs";
 
-import { RoomId } from "./common";
+import { RoomId, ClientId } from "./common";
 
 export type NetworkSender = (arg: any) => void;
 export type NetworkListener = (arg: any) => void;
 export type NetworkConnectionListener = (
+  clientId: ClientId,
   send: (data: any) => void,
   onRequest: (listener: NetworkListener) => void,
   onDisconnect: (listener: NetworkListener) => void
@@ -41,7 +42,7 @@ const startServer = (
       const onDisconnect: NetworkListener = cb => conn.on("error", cb);
 
       conn.on("open", () => {
-        onConnection(send, onRequest, onDisconnect);
+        onConnection(conn.metadata["clientId"], send, onRequest, onDisconnect);
       });
     });
   });
