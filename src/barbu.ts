@@ -78,13 +78,22 @@ export const sortHand = (cards: Hand): Hand =>
   });
 
 type ContractName = string;
-type Contract = { name: ContractName; scorer: ContractScorer };
+type Contract = {
+  name: ContractName;
+  scorer: ContractScorer;
+  shouldAbort: TrickEndChecker;
+};
 type ContractScorer = (tricks: Trick[]) => (sheet: ScoreSheet) => ScoreSheet;
 type Score = number;
 type ScoreSheet = { [PlayerId: string]: Score };
-const newContract = (name: ContractName, scorer: ContractScorer): Contract => ({
+const newContract = (
+  name: ContractName,
+  scorer: ContractScorer,
+  shouldAbort: TrickEndChecker = () => false
+): Contract => ({
   name,
-  scorer
+  scorer,
+  shouldAbort
 });
 const newSheet = (players: PlayerId[] = []): ScoreSheet =>
   players.reduce((sheet, playerId) => ({ ...sheet, [playerId]: 0 }), {});
@@ -136,21 +145,35 @@ const eachCard: CardScorer = (
 ): TrickScorer => trick =>
   trick.reduce((sum, { card }) => sum + (checker(card) ? score : 0), 0);
 
+type TrickEndChecker = (tricks: Trick[]) => boolean;
+const abortWhenPlayed = (
+  check: CardChecker,
+  max: number
+): TrickEndChecker => tricks =>
+  tricks.reduce(
+    (count, move) =>
+      move.reduce((count, { card }) => count + (check(card) ? 1 : 0), count),
+    0
+  ) >= max;
+
 const TricksContract: Contract = newContract(
   "Plis",
   eachTrick(() => 5)
 );
 const HeartsContract: Contract = newContract(
   "Coeurs",
-  eachTrick(eachCard(isHeart, 5))
+  eachTrick(eachCard(isHeart, 5)),
+  abortWhenPlayed(isHeart, 13)
 );
 const QueensContract: Contract = newContract(
   "Dames",
-  eachTrick(eachCard(isQueen, 20))
+  eachTrick(eachCard(isQueen, 20)),
+  abortWhenPlayed(isQueen, 4)
 );
 const BarbuContract: Contract = newContract(
   "Barbu",
-  eachTrick(eachCard(isBarbu, 50))
+  eachTrick(eachCard(isBarbu, 50)),
+  abortWhenPlayed(isBarbu, 1)
 );
 const LastTrickContract: Contract = newContract(
   "Dernier Pli",
@@ -344,7 +367,8 @@ const processContractEnded: EventProcessor<ContractEnded> = ({ tricks }) =>
     s.tricks = [];
   });
 // TODO: Add EventPredicate<T extends Event> interface?
-const isContractEnd = ({ hands }: GameState) =>
+const isContractEnd = ({ hands, currentContract, tricks }: GameState) =>
+  contracts[currentContract].shouldAbort(tricks) ||
   Object.values(hands).every(h => h.length === 0);
 
 interface GameEnded extends BarbuEvent {}
