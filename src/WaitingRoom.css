@@ -29,6 +29,7 @@
 
 button.WaitingRoom__CopyUrlBtn {
   margin-left: 0.6rem;
+  margin-top: var(--rhythm);
   font-size: 0.7rem;
   padding: 0 0.6rem;
   user-select: none;
