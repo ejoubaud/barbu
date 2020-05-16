@@ -87,6 +87,11 @@ const createServer: ServerStarter = async (roomId = newRoomId()) => {
     );
   };
 
+  const clearGame = () => {
+    if (!window.localStorage) return;
+    window.localStorage.clear();
+  };
+
   const play = (name: PlayerId, cards: Card[], reply: NetworkSender) => {
     const { playTurn } = store.getState();
 
@@ -98,6 +103,7 @@ const createServer: ServerStarter = async (roomId = newRoomId()) => {
       return reply(errorResponse(Evt.ActionError, lastGameEvent.err));
 
     const gameEnded = isGameOver(lastGameEvent);
+    if (gameEnded) clearGame();
     store.setState({
       gameEnded,
       lastGameEvent,
