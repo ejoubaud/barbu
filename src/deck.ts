@@ -33,7 +33,9 @@ const cardsToRemove: Card[] = [
   { color: Color.Spades, value: 8 },
   { color: Color.Hearts, value: 8 },
   { color: Color.Clubs, value: 9 },
-  { color: Color.Diamonds, value: 9 }
+  { color: Color.Diamonds, value: 9 },
+  { color: Color.Spades, value: 9 },
+  { color: Color.Hearts, value: 9 }
 ];
 
 export const fullFor = (players: number): Deck => {
