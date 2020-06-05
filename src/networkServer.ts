@@ -18,7 +18,11 @@ const startServer = (
   errorCb: NetworkListener
 ): Promise<NetworkDestroyer> =>
   new Promise<NetworkDestroyer>((resolve, reject) => {
-    const peer = new Peer(`barbu-room-${roomId}`);
+    const peer = new Peer(`barbu-room-${roomId}`, {
+      host: "barbu-peer-server.herokuapp.com",
+      port: 443,
+      secure: true,
+    });
 
     const destroy = () => {
       peer.destroy();
