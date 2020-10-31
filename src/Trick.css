@@ -1,18 +1,18 @@
-.Tricks__Trick {
+.Trick {
   position: relative;
   display: inline-block;
   margin-left: 10px;
 }
-.Tricks__TrickCardContainer {
+.Trick__CardContainer {
   position: relative;
   display: inline-block;
   height: calc(var(--size-card-height) / 2);
   width: calc(var(--size-card-width) / 2);
 }
-.Tricks__TrickCardContainer:not(:last-child) {
+.Trick__CardContainer:not(:last-child) {
   width: 8px;
 }
-.Tricks__TrickCardContainer .card {
+.Trick__CardContainer .card {
   position: absolute;
   left: 0;
   top: 0;

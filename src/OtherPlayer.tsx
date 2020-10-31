@@ -7,8 +7,6 @@ import Tricks from "./Tricks";
 
 import "./OtherPlayer.css";
 
-import "./Tricks.css";
-
 type OtherPlayerProps = {
   name: PlayerId;
   tricks: Trick[];

@@ -1,28 +1,17 @@
 import React from "react";
 
-import { Trick } from "./barbu";
+import { Trick as TrickType } from "./barbu";
+import Trick from "./Trick";
 
 type TricksProps = {
-  tricks: Trick[];
+  tricks: TrickType[];
 };
 
 const Tricks = ({ tricks }: TricksProps) => {
   return (
     <>
-      {tricks.map((trick, trickIdx) => (
-        <div
-          className="Tricks__Trick"
-          key={trickIdx}
-          style={{ zIndex: trickIdx }}
-        >
-          {trick.map(({ card }, cardIdx) => (
-            <div className="Tricks__TrickCardContainer" key={cardIdx}>
-              <div className="card">
-                <div className="back" />
-              </div>
-            </div>
-          ))}
-        </div>
+      {tricks.map((trick, idx) => (
+        <Trick trick={trick} key={idx} />
       ))}
     </>
   );
