@@ -2,8 +2,6 @@ import React from "react";
 
 import { Trick } from "./barbu";
 
-import VisibleCard from "./VisibleCard";
-
 type TricksProps = {
   tricks: Trick[];
 };
@@ -19,7 +17,9 @@ const Tricks = ({ tricks }: TricksProps) => {
         >
           {trick.map(({ card }, cardIdx) => (
             <div className="Tricks__TrickCardContainer" key={cardIdx}>
-              <VisibleCard card={card} depth={cardIdx} />
+              <div className="card">
+                <div className="back" />
+              </div>
             </div>
           ))}
         </div>
