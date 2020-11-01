@@ -4,6 +4,7 @@ import createStore from "zustand";
 import { notNull } from "./common";
 import { playerStore, getGame } from "./playerStore";
 import { sumSheets, PlayerGameState, BarbuEvent } from "./barbu";
+import * as audio from "./audio";
 
 type BarbuStoreState = {
   gameState: PlayerGameState;
@@ -45,3 +46,11 @@ export const getPlayerHandSizes = ({ gameState }: BarbuStoreState) =>
   gameState.playerHandSizes;
 export const getTotalScoreSheet = ({ gameState }: BarbuStoreState) =>
   sumSheets(gameState.contractScoreSheets);
+
+// play a sound when it's your turn
+barbuStore.subscribe(notNull((state: BarbuStoreState) => {
+  if (!getMyHand(state)) return; // don't play if game hasn't begun
+  if (getCurrentPlayer(state) === getMyName(state)) {
+    audio.play();
+  }
+}))
