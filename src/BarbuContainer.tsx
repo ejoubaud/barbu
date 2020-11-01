@@ -8,6 +8,7 @@ import {
   getCurrentPlayer,
   getCurrentTrick,
   getCurrentContract,
+  getPreviousTrickWinner,
   getPlayers,
   getPlayerTricks,
   getPlayerHandSizes,
@@ -32,6 +33,7 @@ const BarbuContainer = () => {
   const playerTricks = useBarbuStore(getPlayerTricks);
   const playerHandSizes = useBarbuStore(getPlayerHandSizes);
   const totalSheet = useBarbuStore(getTotalScoreSheet);
+  const previousTrickWinner = useBarbuStore(getPreviousTrickWinner);
 
   const client = usePlayerStore(getClient);
   const playCard = (card: Card) => () => client.playCards([card]);
@@ -56,6 +58,7 @@ const BarbuContainer = () => {
             tricks={playerTricks[middlePlayer] || []}
             handSize={playerHandSizes[middlePlayer]}
             score={totalSheet[middlePlayer]}
+            showLastTrick={middlePlayer === previousTrickWinner}
           />
         </div>
       )}
@@ -69,6 +72,7 @@ const BarbuContainer = () => {
               tricks={playerTricks[playerId] || []}
               handSize={playerHandSizes[playerId]}
               score={totalSheet[playerId]}
+              showLastTrick={playerId === previousTrickWinner}
             />
           ))}
         </div>
@@ -85,13 +89,14 @@ const BarbuContainer = () => {
               tricks={playerTricks[playerId] || []}
               handSize={playerHandSizes[playerId]}
               score={totalSheet[playerId]}
+              showLastTrick={playerId === previousTrickWinner}
             />
           ))}
         </div>
       </div>
 
       <div className="BarbuContainer__MyTricks">
-        <Tricks tricks={playerTricks[myName] || []} />
+        <Tricks tricks={playerTricks[myName] || []} showLast={previousTrickWinner === myName} />
       </div>
 
       <div className="BarbuContainer__Message">

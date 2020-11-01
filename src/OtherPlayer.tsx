@@ -12,9 +12,16 @@ type OtherPlayerProps = {
   tricks: Trick[];
   handSize: number;
   score?: number;
+  showLastTrick: boolean;
 };
 
-const OtherPlayer = ({ name, tricks, handSize, score }: OtherPlayerProps) => {
+const OtherPlayer = ({
+  name,
+  tricks,
+  handSize,
+  score,
+  showLastTrick
+}: OtherPlayerProps) => {
   return (
     <div className="OtherPlayer">
       <div>
@@ -33,7 +40,7 @@ const OtherPlayer = ({ name, tricks, handSize, score }: OtherPlayerProps) => {
           </div>
         </div>
 
-        <Tricks tricks={tricks} />
+        <Tricks tricks={tricks} showLast={showLastTrick} />
       </div>
     </div>
   );

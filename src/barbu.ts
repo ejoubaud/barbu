@@ -53,6 +53,9 @@ const tricksByWinner = (tricks: Trick[]) =>
     return byWinner;
   }, {} as PlayerTricks);
 
+const previousWinner = (tricks: Trick[]) =>
+  tricks.length > 0 ? trickWinner(tricks[tricks.length - 1]) : null
+
 const colorOrder = {
   [Color.Diamonds]: 0,
   [Color.Clubs]: 1,
@@ -239,6 +242,7 @@ export type PlayerGameState = CommonPlayerGameState & {
   myHand: Hand;
   playerHandSizes: PlayerHandSizes;
   playerTricks: PlayerTricks;
+  previousTrickWinner: PlayerId | null;
   currentTrick: Trick;
   currentPlayer: PlayerId;
   currentContract: ContractName | null | undefined;
@@ -258,6 +262,7 @@ export const gameStateForPlayer: PlayerStateMapper = (commonState, player) => {
       hs[p] = state.hands[p].length;
       return hs;
     }, {} as PlayerHandSizes),
+    previousTrickWinner: previousWinner(state.tricks),
     currentTrick: state.currentTrick,
     currentPlayer: state.players[state.currentPlayer],
     currentContract:
