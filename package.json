@@ -44,6 +44,8 @@
     ]
   },
   "devDependencies": {
+    "chromedriver": "^86.0.0",
+    "nightwatch": "^1.5.1",
     "prettier": "^2.0.4"
   }
 }
