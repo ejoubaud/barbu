@@ -38,7 +38,7 @@ const initClient = async (
   const openConn = () =>
     new Promise<Peer.DataConnection>((resolve, reject) => {
       const peer = new Peer(`barbu-player-${clientId}`, {
-        host: "barbu-peer-server.herokuapp.com",
+        host: "peerjs-server-barbu.fly.dev",
         port: 443,
         secure: true,
       });

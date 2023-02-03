@@ -19,7 +19,7 @@ const startServer = (
 ): Promise<NetworkDestroyer> =>
   new Promise<NetworkDestroyer>((resolve, reject) => {
     const peer = new Peer(`barbu-room-${roomId}`, {
-      host: "barbu-peer-server.herokuapp.com",
+      host: "peerjs-server-barbu.fly.dev",
       port: 443,
       secure: true,
     });
